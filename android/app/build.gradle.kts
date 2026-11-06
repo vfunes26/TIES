@@ -3,6 +3,9 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val ciVersionCode = providers.gradleProperty("versionCode").orNull?.toIntOrNull() ?: 1
+val ciVersionName = providers.gradleProperty("versionName").orNull ?: "0.1.0"
+
 android {
     namespace = "es.citaasistente.app"
     compileSdk = 34
@@ -11,8 +14,8 @@ android {
         applicationId = "es.citaasistente.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = ciVersionCode
+        versionName = ciVersionName
     }
 
     // Firma opcional: si defines estos secretos en GitHub Actions el APK sale firmado (release).

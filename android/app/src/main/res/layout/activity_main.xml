@@ -24,7 +24,7 @@
             android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
             android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
           <TextView android:id="@+id/tit_p1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-              android:text="Paso 1 · Datos de la persona" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+              android:text="PASO 1" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
           <TextView android:id="@+id/chk_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
               android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
           <TextView android:id="@+id/arr_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:hint="Número de documento (NIE / DNI / pasaporte)">
+            android:layout_marginTop="8dp" android:hint="DOCUMENTO">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etDoc" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:inputType="textCapCharacters|textNoSuggestions" android:maxLength="20"/>
@@ -51,7 +51,7 @@
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:hint="Nombre y apellidos (como en el documento)">
+            android:layout_marginTop="8dp" android:hint="NOMBRE Y APELLIDO">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:inputType="textCapWords" />
@@ -59,7 +59,7 @@
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:hint="Nacionalidad (elige de la lista oficial)">
+            android:layout_marginTop="8dp" android:hint="NACIONALIDAD">
             <com.google.android.material.textfield.MaterialAutoCompleteTextView
                 android:id="@+id/ddNationality" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:inputType="textCapCharacters" />
@@ -67,7 +67,7 @@
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:hint="Teléfono (recibirá el SMS)">
+            android:layout_marginTop="8dp" android:hint="TELÉFONO">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPhone" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:inputType="phone" />
@@ -75,7 +75,7 @@
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="8dp" android:hint="Correo electrónico">
+            android:layout_marginTop="8dp" android:hint="CORREO">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:inputType="textEmailAddress" />
