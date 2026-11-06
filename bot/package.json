@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
     "test": "tsc && node --test \"dist/tests/**/*.test.js\"",
-    "test:unit": "tsc && node --test \"dist/tests/unit/*.test.js\"",
+    "test:unit": "tsc && node --test dist/tests/unit/*.test.js",
     "test:integration": "tsc && node --test \"dist/tests/integration/*.test.js\"",
     "test:browser": "tsc && node dist/test.js",
     "proxy": "node proxy.js",
