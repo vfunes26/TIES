@@ -44,6 +44,10 @@ import es.citaasistente.app.data.Stats
 import es.citaasistente.app.data.Status
 import es.citaasistente.app.data.Store
 import es.citaasistente.app.net.Ev
+import com.vfunes26.ties.model.AlertModeManager
+import com.vfunes26.ties.model.ProxyManager
+import com.vfunes26.ties.model.RequestSelector
+import com.vfunes26.ties.model.SelectionMode
 import es.citaasistente.app.net.Mailer
 import es.citaasistente.app.net.Reporter
 import es.citaasistente.app.net.Telegram
@@ -57,6 +61,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var catalog: Catalog
     private lateinit var nats: Nationalities
     private lateinit var store: Store
+    private lateinit var alertModeManager: AlertModeManager
+    private lateinit var proxyManager: ProxyManager
     private lateinit var adapter: RequestAdapter
 
     private val accs = HashMap<String, Acc>()
@@ -107,6 +113,8 @@ class MainActivity : AppCompatActivity() {
         catalog = Catalog.load(this)
         nats = Nationalities.load(this)
         store = Store.get(this)
+        alertModeManager = AlertModeManager(this)
+        proxyManager = ProxyManager(this)
 
         setupAccordions()
         setupSolicitar()
@@ -280,7 +288,11 @@ class MainActivity : AppCompatActivity() {
 
     // ================= COLA =================
     private fun setupCola() {
-        adapter = RequestAdapter(catalog) { showDetail(it.id) }
+        adapter = RequestAdapter(
+            catalog = catalog,
+            onClick = { showDetail(it.id) },
+            onCheckChange = { _, _ -> } // Se maneja internamente en el adaptador con selectedIds
+        )
         val rv = findViewById<RecyclerView>(R.id.rvRequests)
         rv.layoutManager = LinearLayoutManager(this)
         rv.adapter = adapter

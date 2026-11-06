@@ -2,6 +2,7 @@ import { loadConfig } from './config';
 import { validateConfig } from './lib/validate';
 import { BotRunner } from './bot/runner';
 import { BotWalker, defaultSteps } from './steps';
+import { CitaOrchestrator, QueueRequest } from './bot/orchestrator';
 
 (async () => {
     const config = loadConfig();
@@ -16,5 +17,11 @@ import { BotWalker, defaultSteps } from './steps';
     const runner = new BotRunner(config, (page, actor, stepRef, runOptions) =>
         walker.run(page, actor, stepRef, runOptions)
     );
+    
+    // TODO: Integrar CitaOrchestrator cuando la cola esté lista
+    // const queue: QueueRequest[] = []; // Leer desde archivo/API
+    // const orchestrator = new CitaOrchestrator(queue, getProxies(config), config);
+    // await orchestrator.startProcessing();
+    
     await runner.run();
 })();

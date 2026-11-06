@@ -20,18 +20,27 @@ import java.util.Locale
 class RequestAdapter(
     private val catalog: Catalog,
     private val onClick: (Request) -> Unit,
+    private val onCheckChange: (Request, Boolean) -> Unit,
 ) : RecyclerView.Adapter<RequestAdapter.VH>() {
 
     private var items: List<Request> = emptyList()
+    private val selectedIds = mutableSetOf<String>()
     private val fmt = SimpleDateFormat("dd/MM HH:mm", Locale("es", "ES"))
 
-    fun submit(list: List<Request>) { items = list; notifyDataSetChanged() }
+    fun submit(list: List<Request>) { 
+        items = list
+        selectedIds.clear()
+        notifyDataSetChanged() 
+    }
+
+    fun getSelectedIds(): List<String> = selectedIds.toList()
 
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val name: TextView = v.findViewById(R.id.tvName)
         val status: TextView = v.findViewById(R.id.tvStatus)
         val where: TextView = v.findViewById(R.id.tvWhere)
         val meta: TextView = v.findViewById(R.id.tvMeta)
+        val checkbox: androidx.appcompat.widget.AppCompatCheckBox = v.findViewById(R.id.cbSelect)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -53,6 +62,15 @@ class RequestAdapter(
         h.status.text = r.status.label
         val bg = GradientDrawable().apply { cornerRadius = 40f; setColor(Color.parseColor(color(r.status))) }
         h.status.background = bg
+        
+        // Lógica del Checkbox
+        h.checkbox.setOnCheckedChangeListener(null) // Prevenir disparos reciclados
+        h.checkbox.isChecked = selectedIds.contains(r.id)
+        h.checkbox.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedIds.add(r.id) else selectedIds.remove(r.id)
+            onCheckChange(r, isChecked)
+        }
+        
         h.itemView.setOnClickListener { onClick(r) }
     }
 
