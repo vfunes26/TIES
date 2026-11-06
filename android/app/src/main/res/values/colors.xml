@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Rojo y gualda de la bandera de España -->
+    <color name="rojo">#C60B1E</color>
+    <color name="rojo_oscuro">#8E0715</color>
+    <color name="rojo_claro">#FDECEE</color>
+    <color name="gualda">#FFC400</color>
+    <color name="gualda_oscuro">#B58900</color>
+    <color name="fondo">#FFFBF5</color>
+    <color name="texto">#2B1B1B</color>
+    <color name="ok">#2E7D32</color>
+    <color name="blanco">#FFFFFF</color>
+</resources>

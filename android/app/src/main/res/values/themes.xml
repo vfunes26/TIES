@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.CitaAsistente" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/rojo</item>
+        <item name="colorOnPrimary">@color/blanco</item>
+        <item name="colorPrimaryContainer">@color/rojo_claro</item>
+        <item name="colorOnPrimaryContainer">@color/rojo_oscuro</item>
+        <item name="colorSecondary">@color/gualda</item>
+        <item name="colorOnSecondary">@color/texto</item>
+        <item name="colorSecondaryContainer">@color/gualda</item>
+        <item name="colorOnSecondaryContainer">@color/texto</item>
+        <item name="android:colorBackground">@color/fondo</item>
+        <item name="colorSurface">@color/blanco</item>
+        <item name="colorOnSurface">@color/texto</item>
+        <item name="android:statusBarColor">@color/rojo_oscuro</item>
+        <item name="android:navigationBarColor">@color/rojo_oscuro</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/fondo">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="vertical" android:background="@color/rojo" android:padding="12dp">
+    <TextView android:id="@+id/tvStatus" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Iniciando…" android:textColor="@color/blanco" android:textSize="15sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/tvDetail" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="" android:textColor="@color/gualda" android:textSize="13sp"/>
+    <TextView android:id="@+id/tvQueue" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="" android:textColor="@color/blanco" android:textSize="12sp" android:layout_marginTop="2dp"/>
+  </LinearLayout>
+  <View android:layout_width="match_parent" android:layout_height="4dp" android:background="@color/gualda"/>
+  <WebView android:id="@+id/web" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="horizontal" android:padding="8dp" android:background="@color/blanco">
+    <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+        android:id="@+id/btnSkip" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="wrap_content" android:text="Saltar"/>
+    <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+        android:id="@+id/btnPause" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Pausar"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnClose" android:layout_width="0dp" android:layout_weight="1"
+        android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Salir" app:backgroundTint="@color/rojo"/>
+  </LinearLayout>
+</LinearLayout>

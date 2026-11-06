@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CitaAsistente</string>
+    <string name="canal_alarma">Cita disponible (alarma)</string>
+    <string name="canal_alarma_desc">Suena como alarma cuando se detecta una cita para tu provincia y trámite.</string>
+    <string name="canal_estado">Estado y salud</string>
+    <string name="canal_estado_desc">Avisos sobre el funcionamiento de las alertas y del asistente.</string>
+    <string name="accion_iniciar">Iniciar autorrelleno</string>
+</resources>

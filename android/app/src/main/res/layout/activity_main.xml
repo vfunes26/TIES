@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/fondo">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+      android:orientation="vertical" android:background="@color/rojo" android:paddingTop="22dp"
+      android:paddingStart="18dp" android:paddingEnd="18dp" android:paddingBottom="10dp">
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="CitaAsistente" android:textColor="@color/blanco" android:textSize="22sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/tvSubtitle" android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Cola de solicitudes · alertas · autorrelleno" android:textColor="@color/gualda" android:textSize="12sp"/>
+  </LinearLayout>
+  <View android:layout_width="match_parent" android:layout_height="5dp" android:background="@color/gualda"/>
+  <View android:layout_width="match_parent" android:layout_height="5dp" android:background="@color/rojo"/>
+  <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+    <ScrollView android:id="@+id/panelSolicitar" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+          android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="20dp">
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_p1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_p1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Paso 1 · Datos de la persona" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_p1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_p1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Tipo de documento">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/ddDocType" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="none" android:focusable="false"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Número de documento (NIE / DNI / pasaporte)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etDoc" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textCapCharacters|textNoSuggestions" android:maxLength="20"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Nombre y apellidos (como en el documento)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textCapWords" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Nacionalidad (elige de la lista oficial)">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/ddNationality" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textCapCharacters" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Teléfono (recibirá el SMS)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etPhone" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="phone" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Correo electrónico">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etEmail" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveP1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_p2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_p2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Paso 2 · Trámite (catálogo oficial)" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_p2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_p2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_p2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Provincia">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/ddProvince" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="text" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Trámite">
+            <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                android:id="@+id/ddProcedure" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="none" android:focusable="false"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnOffices" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Sedes: cualquier oficina de la provincia"/>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Aceptar la primera cita a partir de…">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMinDate" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="text" android:focusable="false" android:clickable="true"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <TextView android:id="@+id/tvMinHint" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Se elige la cita disponible MÁS PRÓXIMA a partir de esa fecha, sea en el mes que sea." android:textSize="12sp" android:textColor="#6B5B5B" />
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveP2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"
+        android:gravity="center_vertical" android:layout_marginTop="14dp">
+      <TextView android:id="@+id/tvSolicitarHint" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+          android:text="Completa los dos pasos y pulsa SOLICITAR: se guarda en la cola." android:textSize="12sp" android:textColor="#6B5B5B"/>
+      <com.google.android.material.button.MaterialButton android:id="@+id/btnSolicitar" android:layout_width="wrap_content" android:layout_height="52dp"
+          android:text="SOLICITAR" android:textStyle="bold" app:backgroundTint="@color/rojo" android:textColor="@color/blanco"/>
+    </LinearLayout>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:textSize="11sp" android:textColor="#6B5B5B"
+        android:text="App no oficial. Rellena el formulario de la sede electrónica oficial; el captcha y el código SMS los introduces tú."/>
+      </LinearLayout>
+    </ScrollView>
+    <LinearLayout android:id="@+id/panelCola" android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:paddingStart="14dp" android:paddingEnd="14dp">
+      <TextView android:id="@+id/tvStats" android:layout_width="match_parent" android:layout_height="wrap_content"
+          android:layout_marginTop="10dp" android:textSize="13sp" android:textColor="@color/texto" android:background="@color/rojo_claro" android:padding="12dp"/>
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnProcesar" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="Procesar cola" app:backgroundTint="@color/rojo" android:textColor="@color/blanco"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton" android:id="@+id/btnLote"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:text="Solo un lote"/>
+      </LinearLayout>
+      <TextView android:id="@+id/tvEmpty" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="24dp"
+          android:text="Aún no hay solicitudes. Ve a «Solicitar», rellena los dos pasos y pulsa SOLICITAR." android:gravity="center" android:textColor="#6B5B5B"/>
+      <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvRequests" android:layout_width="match_parent" android:layout_height="0dp"
+          android:layout_weight="1" android:layout_marginTop="8dp" android:clipToPadding="false" android:paddingBottom="12dp"/>
+    </LinearLayout>
+    <ScrollView android:id="@+id/panelAlertas" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+          android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="20dp">
+        <TextView android:id="@+id/tvMonitor" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="" android:textSize="14sp" android:textColor="@color/texto" android:background="@color/rojo_claro" android:padding="12dp"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnWatch" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Iniciar vigilancia (procesa la cola de forma continua)"/>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_a1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_a1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Fuentes de alerta y arranque" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_a1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_a1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_a1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swAlertsApp" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Leer alertas de la app Extranjería Alerts (opcional)"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTelegramSrc" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Leer avisos del bot de Telegram (CITA_DISPONIBLE)"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swStrict" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Modo estricto: exigir provincia y trámite en la alerta"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swAutoLaunch" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Arrancar el autorrelleno solo al detectar cita"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swScreenOn" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Encender la pantalla al arrancar por alerta"/>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Avisar si no llegan alertas externas en X horas (0 = no)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSilence" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="3"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveA1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_a2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_a2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Estado y permisos del sistema" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_a2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_a2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_a2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <LinearLayout android:id="@+id/healthContainer" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="6dp"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnAccess" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Dar acceso a notificaciones (alertas externas)"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnOverlay" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Permitir autoarranque (mostrar sobre otras apps)"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnBattery" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Quitar límite de batería"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnOpenAlerts" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Abrir Extranjería Alerts (opcional)"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_a3" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_a3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Historial de alertas" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_a3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_a3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_a3" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <TextView android:id="@+id/tvAlertLog" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="" android:textSize="12sp" android:textColor="@color/texto" />
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnTest" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Probar interpretación de una alerta"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnLog" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Ver registro completo"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+      </LinearLayout>
+    </ScrollView>
+    <ScrollView android:id="@+id/panelAjustes" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+          android:paddingStart="14dp" android:paddingEnd="14dp" android:paddingBottom="20dp">
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_s1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_s1" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Telegram (alertas y avisos)" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_s1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_s1" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_s1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTg" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Enviar notificaciones a Telegram"/>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Token del bot (de @BotFather)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etToken" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Chat ID (número o @canal)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etChat" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textNoSuggestions" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTgAlerts" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Alertas de cita detectada"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTgProcess" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Avisos del proceso (inicio, captcha, sin citas)"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTgResults" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Resultados (CON CITA / fallida)"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnTgTest" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Enviar mensaje de prueba"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveS1" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_s2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_s2" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Correo electrónico (informes)" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_s2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_s2" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_s2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swMail" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Enviar informes por correo"/>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Servidor SMTP">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSmtpHost" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textUri" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Puerto (587 STARTTLS · 465 SSL)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSmtpPort" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="5"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Usuario / correo remitente">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSmtpUser" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Contraseña de aplicación">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSmtpPass" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Correo destinatario">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMailTo" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="textEmailAddress" />
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swMailReg" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Al registrar una solicitud (con todos sus datos)"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swMailResult" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Al conseguir cita o fallar (con el proceso y estadísticas)"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnMailTest" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Enviar correo de prueba"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveS2" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_s3" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_s3" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Procesamiento de la cola" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_s3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_s3" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_s3" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Solicitudes por lote">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBatch" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="2"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Pausa entre lotes (minutos)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etBatchPause" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="3"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Pausa entre pasadas sin citas (minutos, mín. 3)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRetry" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="3"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Separación entre solicitudes (segundos, mín. 30)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etGap" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="4"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Tiempo para captcha/SMS (minutos)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etCaptchaTimeout" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="number" android:maxLength="2"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swConsent" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Marcar yo la casilla de conformidad final"/>
+        <TextView android:id="@+id/tvProcHint" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Recomendado: de una en una, lotes de 5 y pausa de 10 min. Solo hay una sesión a la vez porque el captcha lo resuelves tú." android:textSize="12sp" android:textColor="#6B5B5B" />
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button"
+            android:id="@+id/btnSaveS3" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Guardar y cerrar"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="10dp" app:cardCornerRadius="16dp" app:cardElevation="2dp"
+        app:strokeColor="@color/rojo_claro" app:strokeWidth="1dp">
+      <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+        <LinearLayout android:id="@+id/hdr_s4" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:padding="16dp"
+            android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+          <TextView android:id="@+id/tit_s4" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+              android:text="Estadísticas" android:textColor="@color/rojo" android:textSize="16sp" android:textStyle="bold"/>
+          <TextView android:id="@+id/chk_s4" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="✔" android:textColor="@color/ok" android:textSize="18sp" android:textStyle="bold" android:visibility="gone" android:layout_marginEnd="10dp"/>
+          <TextView android:id="@+id/arr_s4" android:layout_width="wrap_content" android:layout_height="wrap_content"
+              android:text="▾" android:textColor="@color/rojo" android:textSize="20sp"/>
+        </LinearLayout>
+        <LinearLayout android:id="@+id/body_s4" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="16dp" android:visibility="gone">
+        <TextView android:id="@+id/tvStatsFull" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="" android:textSize="13sp" android:textColor="@color/texto" />
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnSendSummary" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Enviar resumen por Telegram / correo"/>
+        </LinearLayout>
+      </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+      </LinearLayout>
+    </ScrollView>
+  </FrameLayout>
+  <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/bottomNav"
+      android:layout_width="match_parent" android:layout_height="wrap_content" app:menu="@menu/bottom_nav"
+      android:background="@color/blanco" app:labelVisibilityMode="labeled"/>
+</LinearLayout>

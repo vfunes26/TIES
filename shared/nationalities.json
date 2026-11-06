@@ -1,0 +1,822 @@
+{
+ "source": "Valores públicos del desplegable #txtPaisNac de la sede electrónica (ICP Plus)",
+ "capturedAt": "2026-08-12",
+ "options": [
+  {
+   "value": "401",
+   "label": "AFGANISTAN"
+  },
+  {
+   "value": "102",
+   "label": "ALBANIA"
+  },
+  {
+   "value": "103",
+   "label": "ALEMANIA"
+  },
+  {
+   "value": "133",
+   "label": "ANDORRA"
+  },
+  {
+   "value": "301",
+   "label": "ANGOLA"
+  },
+  {
+   "value": "258",
+   "label": "ANGUILLA"
+  },
+  {
+   "value": "255",
+   "label": "ANTIGUA Y BARBUDA"
+  },
+  {
+   "value": "200",
+   "label": "ANTILLAS NL."
+  },
+  {
+   "value": "600",
+   "label": "APATRIDA"
+  },
+  {
+   "value": "403",
+   "label": "ARABIA SAUDI"
+  },
+  {
+   "value": "304",
+   "label": "ARGELIA"
+  },
+  {
+   "value": "202",
+   "label": "ARGENTINA"
+  },
+  {
+   "value": "142",
+   "label": "ARMENIA"
+  },
+  {
+   "value": "257",
+   "label": "ARUBA"
+  },
+  {
+   "value": "500",
+   "label": "AUSTRALIA"
+  },
+  {
+   "value": "104",
+   "label": "AUSTRIA"
+  },
+  {
+   "value": "143",
+   "label": "AZERBAYAN"
+  },
+  {
+   "value": "203",
+   "label": "BAHAMAS"
+  },
+  {
+   "value": "405",
+   "label": "BAHREIN"
+  },
+  {
+   "value": "432",
+   "label": "BANGLADESH"
+  },
+  {
+   "value": "205",
+   "label": "BARBADOS"
+  },
+  {
+   "value": "105",
+   "label": "BELGICA"
+  },
+  {
+   "value": "207",
+   "label": "BELICE"
+  },
+  {
+   "value": "302",
+   "label": "BENIN"
+  },
+  {
+   "value": "407",
+   "label": "BHUTAN"
+  },
+  {
+   "value": "144",
+   "label": "BIELORRUSIA O BELARUS"
+  },
+  {
+   "value": "204",
+   "label": "BOLIVIA"
+  },
+  {
+   "value": "156",
+   "label": "BOSNIA-HERZEGOVINA"
+  },
+  {
+   "value": "305",
+   "label": "BOTSWANA"
+  },
+  {
+   "value": "206",
+   "label": "BRASIL"
+  },
+  {
+   "value": "409",
+   "label": "BRUNEI DARUSSALAM"
+  },
+  {
+   "value": "134",
+   "label": "BULGARIA"
+  },
+  {
+   "value": "303",
+   "label": "BURKINA FASO"
+  },
+  {
+   "value": "321",
+   "label": "BURUNDI"
+  },
+  {
+   "value": "315",
+   "label": "CABO VERDE"
+  },
+  {
+   "value": "402",
+   "label": "CAMBOYA"
+  },
+  {
+   "value": "308",
+   "label": "CAMERUN"
+  },
+  {
+   "value": "208",
+   "label": "CANADA"
+  },
+  {
+   "value": "310",
+   "label": "CENTROAFRICA REPUBLICA"
+  },
+  {
+   "value": "372",
+   "label": "CHAD"
+  },
+  {
+   "value": "210",
+   "label": "CHILE"
+  },
+  {
+   "value": "406",
+   "label": "CHINA"
+  },
+  {
+   "value": "107",
+   "label": "CHIPRE"
+  },
+  {
+   "value": "212",
+   "label": "COLOMBIA"
+  },
+  {
+   "value": "311",
+   "label": "COMORES"
+  },
+  {
+   "value": "312",
+   "label": "CONGO BRAZZAVILLE"
+  },
+  {
+   "value": "460",
+   "label": "COREA, REP. POP. DEMOC."
+  },
+  {
+   "value": "410",
+   "label": "COREA, REPUBLICA"
+  },
+  {
+   "value": "314",
+   "label": "COSTA DE MARFIL"
+  },
+  {
+   "value": "214",
+   "label": "COSTA RICA"
+  },
+  {
+   "value": "140",
+   "label": "CROACIA"
+  },
+  {
+   "value": "216",
+   "label": "CUBA"
+  },
+  {
+   "value": "108",
+   "label": "DINAMARCA"
+  },
+  {
+   "value": "317",
+   "label": "DJIBOUTI"
+  },
+  {
+   "value": "217",
+   "label": "DOMINICA"
+  },
+  {
+   "value": "218",
+   "label": "DOMINICANA REPUBLICA"
+  },
+  {
+   "value": "222",
+   "label": "ECUADOR"
+  },
+  {
+   "value": "224",
+   "label": "EEUU"
+  },
+  {
+   "value": "300",
+   "label": "EGIPTO"
+  },
+  {
+   "value": "220",
+   "label": "EL SALVADOR"
+  },
+  {
+   "value": "136",
+   "label": "EL VATICANO"
+  },
+  {
+   "value": "429",
+   "label": "EMIRATOS ARABES UNIDOS"
+  },
+  {
+   "value": "384",
+   "label": "ERITREA"
+  },
+  {
+   "value": "158",
+   "label": "ESLOVAQUIA"
+  },
+  {
+   "value": "141",
+   "label": "ESLOVENIA"
+  },
+  {
+   "value": "109",
+   "label": "ESPAÑA"
+  },
+  {
+   "value": "137",
+   "label": "ESTONIA"
+  },
+  {
+   "value": "318",
+   "label": "ETIOPIA"
+  },
+  {
+   "value": "550",
+   "label": "FIDJI"
+  },
+  {
+   "value": "411",
+   "label": "FILIPINAS"
+  },
+  {
+   "value": "110",
+   "label": "FINLANDIA"
+  },
+  {
+   "value": "111",
+   "label": "FRANCIA"
+  },
+  {
+   "value": "320",
+   "label": "GABON"
+  },
+  {
+   "value": "323",
+   "label": "GAMBIA"
+  },
+  {
+   "value": "145",
+   "label": "GEORGIA"
+  },
+  {
+   "value": "322",
+   "label": "GHANA"
+  },
+  {
+   "value": "229",
+   "label": "GRANADA REPUBLICA"
+  },
+  {
+   "value": "113",
+   "label": "GRECIA"
+  },
+  {
+   "value": "228",
+   "label": "GUATEMALA"
+  },
+  {
+   "value": "225",
+   "label": "GUAYANA"
+  },
+  {
+   "value": "324",
+   "label": "GUINEA ECUATORIAL"
+  },
+  {
+   "value": "325",
+   "label": "GUINEA REPUBLICA"
+  },
+  {
+   "value": "328",
+   "label": "GUINEA-BISSAU"
+  },
+  {
+   "value": "230",
+   "label": "HAITI"
+  },
+  {
+   "value": "123",
+   "label": "HOLANDA"
+  },
+  {
+   "value": "232",
+   "label": "HONDURAS"
+  },
+  {
+   "value": "114",
+   "label": "HUNGRIA"
+  },
+  {
+   "value": "412",
+   "label": "INDIA"
+  },
+  {
+   "value": "414",
+   "label": "INDONESIA"
+  },
+  {
+   "value": "413",
+   "label": "IRAK"
+  },
+  {
+   "value": "415",
+   "label": "IRAN"
+  },
+  {
+   "value": "115",
+   "label": "IRLANDA"
+  },
+  {
+   "value": "116",
+   "label": "ISLANDIA"
+  },
+  {
+   "value": "520",
+   "label": "ISLAS MARSCHALL"
+  },
+  {
+   "value": "417",
+   "label": "ISRAEL"
+  },
+  {
+   "value": "117",
+   "label": "ITALIA"
+  },
+  {
+   "value": "233",
+   "label": "JAMAICA"
+  },
+  {
+   "value": "416",
+   "label": "JAPON"
+  },
+  {
+   "value": "419",
+   "label": "JORDANIA"
+  },
+  {
+   "value": "146",
+   "label": "KAZAJSTAN"
+  },
+  {
+   "value": "336",
+   "label": "KENIA"
+  },
+  {
+   "value": "147",
+   "label": "KIRGUISTAN"
+  },
+  {
+   "value": "501",
+   "label": "KIRIBATI"
+  },
+  {
+   "value": "421",
+   "label": "KUWAIT"
+  },
+  {
+   "value": "418",
+   "label": "LAOS"
+  },
+  {
+   "value": "436",
+   "label": "LAS MALDIVAS"
+  },
+  {
+   "value": "337",
+   "label": "LESOTHO"
+  },
+  {
+   "value": "138",
+   "label": "LETONIA"
+  },
+  {
+   "value": "423",
+   "label": "LIBANO"
+  },
+  {
+   "value": "342",
+   "label": "LIBERIA"
+  },
+  {
+   "value": "344",
+   "label": "LIBIA"
+  },
+  {
+   "value": "118",
+   "label": "LIECHTENSTEIN"
+  },
+  {
+   "value": "139",
+   "label": "LITUANIA"
+  },
+  {
+   "value": "119",
+   "label": "LUXEMBURGO"
+  },
+  {
+   "value": "463",
+   "label": "MACAO"
+  },
+  {
+   "value": "159",
+   "label": "MACEDONIA"
+  },
+  {
+   "value": "354",
+   "label": "MADAGASCAR"
+  },
+  {
+   "value": "425",
+   "label": "MALASIA"
+  },
+  {
+   "value": "900",
+   "label": "MALASIA - GRAN BRETAÑA"
+  },
+  {
+   "value": "346",
+   "label": "MALAWI"
+  },
+  {
+   "value": "347",
+   "label": "MALI"
+  },
+  {
+   "value": "120",
+   "label": "MALTA"
+  },
+  {
+   "value": "348",
+   "label": "MARRUECOS"
+  },
+  {
+   "value": "349",
+   "label": "MAURICIO"
+  },
+  {
+   "value": "350",
+   "label": "MAURITANIA"
+  },
+  {
+   "value": "234",
+   "label": "MEJICO"
+  },
+  {
+   "value": "525",
+   "label": "MICRONESIA"
+  },
+  {
+   "value": "148",
+   "label": "MOLDAVIA"
+  },
+  {
+   "value": "121",
+   "label": "MONACO"
+  },
+  {
+   "value": "427",
+   "label": "MONGOLIA"
+  },
+  {
+   "value": "160",
+   "label": "MONTENEGRO"
+  },
+  {
+   "value": "351",
+   "label": "MOZAMBIQUE"
+  },
+  {
+   "value": "400",
+   "label": "MYANMAR"
+  },
+  {
+   "value": "353",
+   "label": "NAMIBIA"
+  },
+  {
+   "value": "541",
+   "label": "NAURU"
+  },
+  {
+   "value": "420",
+   "label": "NEPAL"
+  },
+  {
+   "value": "236",
+   "label": "NICARAGUA"
+  },
+  {
+   "value": "360",
+   "label": "NIGER"
+  },
+  {
+   "value": "352",
+   "label": "NIGERIA"
+  },
+  {
+   "value": "122",
+   "label": "NORUEGA"
+  },
+  {
+   "value": "540",
+   "label": "NUEVA ZELANDA"
+  },
+  {
+   "value": "444",
+   "label": "OMAN"
+  },
+  {
+   "value": "424",
+   "label": "PAKISTAN"
+  },
+  {
+   "value": "920",
+   "label": "PALAOS"
+  },
+  {
+   "value": "910",
+   "label": "PALESTINA"
+  },
+  {
+   "value": "238",
+   "label": "PANAMA"
+  },
+  {
+   "value": "542",
+   "label": "PAPUA NUEVA GUINEA"
+  },
+  {
+   "value": "240",
+   "label": "PARAGUAY"
+  },
+  {
+   "value": "242",
+   "label": "PERU"
+  },
+  {
+   "value": "124",
+   "label": "POLONIA"
+  },
+  {
+   "value": "125",
+   "label": "PORTUGAL"
+  },
+  {
+   "value": "244",
+   "label": "PUERTO RICO"
+  },
+  {
+   "value": "431",
+   "label": "QATAR"
+  },
+  {
+   "value": "112",
+   "label": "REINO UNIDO"
+  },
+  {
+   "value": "380",
+   "label": "REP. DEMOCRATICA DEL CONGO (EX-ZAIRE)"
+  },
+  {
+   "value": "157",
+   "label": "REPUBLICA CHECA"
+  },
+  {
+   "value": "355",
+   "label": "REUNION-COMO"
+  },
+  {
+   "value": "306",
+   "label": "RUANDA"
+  },
+  {
+   "value": "127",
+   "label": "RUMANIA"
+  },
+  {
+   "value": "149",
+   "label": "RUSIA"
+  },
+  {
+   "value": "551",
+   "label": "SALOMON"
+  },
+  {
+   "value": "552",
+   "label": "SAMOA OCCIDENTAL"
+  },
+  {
+   "value": "256",
+   "label": "SAN CRISTOBAL Y NEVIS"
+  },
+  {
+   "value": "135",
+   "label": "SAN MARINO"
+  },
+  {
+   "value": "254",
+   "label": "SAN VICENTE"
+  },
+  {
+   "value": "253",
+   "label": "SANTA LUCIA"
+  },
+  {
+   "value": "361",
+   "label": "SANTO TOME Y PRINCIPE"
+  },
+  {
+   "value": "363",
+   "label": "SEICHELLES"
+  },
+  {
+   "value": "362",
+   "label": "SENEGAL"
+  },
+  {
+   "value": "366",
+   "label": "SENEGAMBIA"
+  },
+  {
+   "value": "155",
+   "label": "SERBIA"
+  },
+  {
+   "value": "364",
+   "label": "SIERRA LEONA"
+  },
+  {
+   "value": "426",
+   "label": "SINGAPUR"
+  },
+  {
+   "value": "433",
+   "label": "SIRIA"
+  },
+  {
+   "value": "365",
+   "label": "SOMALIA"
+  },
+  {
+   "value": "404",
+   "label": "SRI LANKA"
+  },
+  {
+   "value": "367",
+   "label": "SUDAFRICA"
+  },
+  {
+   "value": "368",
+   "label": "SUDAN"
+  },
+  {
+   "value": "128",
+   "label": "SUECIA"
+  },
+  {
+   "value": "129",
+   "label": "SUIZA"
+  },
+  {
+   "value": "250",
+   "label": "SURINAM"
+  },
+  {
+   "value": "371",
+   "label": "SWAZILANDIA"
+  },
+  {
+   "value": "154",
+   "label": "TADJIKISTAN"
+  },
+  {
+   "value": "408",
+   "label": "TAIWAN"
+  },
+  {
+   "value": "370",
+   "label": "TANZANIA"
+  },
+  {
+   "value": "428",
+   "label": "THAILANDIA"
+  },
+  {
+   "value": "465",
+   "label": "TIMOR ORIENTAL"
+  },
+  {
+   "value": "374",
+   "label": "TOGO"
+  },
+  {
+   "value": "554",
+   "label": "TONGA"
+  },
+  {
+   "value": "245",
+   "label": "TRINIDAD Y TOBAGO"
+  },
+  {
+   "value": "378",
+   "label": "TUNEZ"
+  },
+  {
+   "value": "151",
+   "label": "TURKMENIA"
+  },
+  {
+   "value": "130",
+   "label": "TURQUIA"
+  },
+  {
+   "value": "560",
+   "label": "TUVALU"
+  },
+  {
+   "value": "152",
+   "label": "UCRANIA"
+  },
+  {
+   "value": "358",
+   "label": "UGANDA"
+  },
+  {
+   "value": "246",
+   "label": "URUGUAY"
+  },
+  {
+   "value": "153",
+   "label": "UZBEKISTAN"
+  },
+  {
+   "value": "565",
+   "label": "VANUATU"
+  },
+  {
+   "value": "248",
+   "label": "VENEZUELA"
+  },
+  {
+   "value": "430",
+   "label": "VIETNAM"
+  },
+  {
+   "value": "434",
+   "label": "YEMEN"
+  },
+  {
+   "value": "382",
+   "label": "ZAMBIA"
+  },
+  {
+   "value": "357",
+   "label": "ZIMBABWE"
+  }
+ ]
+}

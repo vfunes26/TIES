@@ -1,0 +1,22 @@
+# Bot (Node)
+bot/node_modules/
+bot/dist/
+bot/config.json
+bot/config.actors.json
+bot/profiles/*
+!bot/profiles/README.md
+bot/recordings/
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.jks
+*.keystore
+.idea/
+*.iml
+
+# Secretos / datos personales: NUNCA al repositorio
+.env
+*.secret.json

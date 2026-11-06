@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_solicitar" android:icon="@drawable/ic_add" android:title="Solicitar" />
+    <item android:id="@+id/nav_cola" android:icon="@drawable/ic_list" android:title="Cola" />
+    <item android:id="@+id/nav_alertas" android:icon="@drawable/ic_bell" android:title="Alertas" />
+    <item android:id="@+id/nav_ajustes" android:icon="@drawable/ic_settings" android:title="Ajustes" />
+</menu>
