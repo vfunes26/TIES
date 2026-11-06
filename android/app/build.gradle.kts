@@ -66,6 +66,9 @@ dependencies {
     // Envío de correo por SMTP (TLS)
     implementation("com.sun.mail:android-mail:1.6.7")
     implementation("com.sun.mail:android-activation:1.6.7")
+    
+    // Serialización JSON para gestión de Proxies y Cola
+    implementation("com.google.code.gson:gson:2.10.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
