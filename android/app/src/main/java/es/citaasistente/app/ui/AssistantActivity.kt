@@ -32,6 +32,10 @@ import es.citaasistente.app.net.Ev
 import es.citaasistente.app.net.Reporter
 import org.json.JSONArray
 import org.json.JSONObject
+import androidx.core.content.ContextCompat
+import androidx.webkit.ProxyConfig
+import androidx.webkit.ProxyController
+import androidx.webkit.WebViewFeature
 
 /**
  * Ejecutor de la cola de solicitudes. Procesa de una en una dentro de la sede electrónica oficial:
@@ -232,7 +236,96 @@ class AssistantActivity : AppCompatActivity() {
             .put("offices", JSONArray(p.offices)).put("minDate", p.minDate)
             .put("autoConsent", store.settings.autoConsent).toString()
         updateQueueLine()
-        loadStart()
+        applyProxyForRequest()
+    }
+
+    private fun applyProxyForRequest() {
+        val settings = store.settings
+
+        if (!settings.proxyEnabled) {
+            clearProxyOverride {
+                if (!isFinishing && currentId != null) loadStart()
+            }
+            return
+        }
+
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            stopForProxyError(
+                "La versión instalada de WebView no admite la configuración de proxies."
+            )
+            return
+        }
+
+        val proxy = store.nextUsableProxy()
+
+        if (proxy == null) {
+            stopForProxyError(
+                "No hay proxies habilitados y compatibles. " +
+                    "Se requieren proxies sin usuario ni contraseña."
+            )
+            return
+        }
+
+        val scheme = when (proxy.type.lowercase()) {
+            "http" -> "http"
+            "https" -> "https"
+            "socks5" -> "socks5"
+            else -> {
+                stopForProxyError("Tipo de proxy no compatible: ${proxy.type}")
+                return
+            }
+        }
+
+        val config = ProxyConfig.Builder()
+            .addProxyRule("$scheme://${proxy.host}:${proxy.port}")
+            .build()
+
+        runCatching {
+            ProxyController.getInstance().setProxyOverride(
+                config,
+                ContextCompat.getMainExecutor(this)
+            ) {
+                if (!isFinishing && currentId != null) {
+                    loadStart()
+                }
+            }
+        }.onFailure {
+            stopForProxyError(
+                "No se pudo aplicar el proxy: ${it.message ?: "Error desconocido"}"
+            )
+        }
+    }
+
+    private fun clearProxyOverride(after: (() -> Unit)? = null) {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            after?.invoke()
+            return
+        }
+
+        runCatching {
+            ProxyController.getInstance().clearProxyOverride(
+                ContextCompat.getMainExecutor(this)
+            ) {
+                after?.invoke()
+            }
+        }.onFailure {
+            after?.invoke()
+        }
+    }
+
+    private fun stopForProxyError(reason: String) {
+        val id = currentId
+
+        if (id != null) {
+            val updated = store.updateRequest(id) {
+                it.copy(status = Status.PENDIENTE)
+            }
+
+            Reporter.log(this, updated, "proxy", reason)
+        }
+
+        currentId = null
+        finishRun("Proxy no disponible", reason)
     }
 
     private fun loadStart() {
@@ -370,6 +463,7 @@ class AssistantActivity : AppCompatActivity() {
     private fun finishRun(title: String, detail: String) {
         finished = true
         cancelTimer(); cancelHuman()
+        clearProxyOverride()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setStatus(title, detail)
         updateQueueLine()
@@ -484,6 +578,7 @@ class AssistantActivity : AppCompatActivity() {
             Reporter.log(this, u, "sistema", "Interrumpida al cerrar el asistente; vuelve a la cola")
         }
         active = false
+        clearProxyOverride()
         if (::web.isInitialized) { web.removeJavascriptInterface("CitaBridge"); web.destroy() }
         super.onDestroy()
     }

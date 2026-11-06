@@ -71,6 +71,90 @@ class Store private constructor(context: Context) {
         encrypted
     }
 
+    // Migración del gestor antiguo de proxies a almacenamiento cifrado.
+    init {
+        val legacyProxy = context.getSharedPreferences(
+            "cita_prefs",
+            Context.MODE_PRIVATE
+        )
+
+        if (legacyProxy.contains("proxy_enabled") ||
+            legacyProxy.contains("proxy_list_json")
+        ) {
+            val raw = legacyProxy.getString("proxy_list_json", null)
+            val oldArray = if (raw == null) {
+                JSONArray()
+            } else {
+                runCatching { JSONArray(raw) }.getOrNull()
+            }
+
+            if (oldArray != null) {
+                val migrated = JSONArray()
+                var valid = true
+
+                for (i in 0 until oldArray.length()) {
+                    val item = oldArray.optJSONObject(i)
+
+                    if (item == null) {
+                        valid = false
+                        break
+                    }
+
+                    val parsed = ProxyParser.parseLine(
+                        item.optString("server")
+                    )
+
+                    if (parsed == null) {
+                        valid = false
+                        break
+                    }
+
+                    migrated.put(
+                        parsed.copy(
+                            user = item.optString("username"),
+                            pass = item.optString("password")
+                        ).toJson()
+                    )
+                }
+
+                if (valid) {
+                    val editor = secure.edit()
+
+                    if (!secure.contains("proxies") && raw != null) {
+                        editor.putString("proxies", migrated.toString())
+                    }
+
+                    if (legacyProxy.getBoolean("proxy_enabled", false)) {
+                        val current = secure.getString("settings2", null)
+                            ?.let {
+                                runCatching {
+                                    Settings.fromJson(JSONObject(it))
+                                }.getOrNull()
+                            } ?: Settings()
+
+                        editor.putString(
+                            "settings2",
+                            current.copy(proxyEnabled = true).toJson().toString()
+                        )
+                    }
+
+                    check(editor.commit()) {
+                        "No se pudo migrar la configuración de proxies."
+                    }
+
+                    check(
+                        legacyProxy.edit()
+                            .remove("proxy_enabled")
+                            .remove("proxy_list_json")
+                            .commit()
+                    ) {
+                        "No se pudo limpiar la configuración antigua de proxies."
+                    }
+                }
+            }
+        }
+    }
+
     // Estado no sensible: registro de eventos y marcas de tiempo.
     private val plain: SharedPreferences = context.getSharedPreferences("citaasistente_state", Context.MODE_PRIVATE)
     private val lock = Any()
@@ -131,6 +215,23 @@ class Store private constructor(context: Context) {
             secure.edit().putString("proxies", arr.toString()).apply()
             updated
         }
+
+    // ---------- Selección secuencial de proxies ----------
+
+    fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
+        val usable = proxies().filter {
+            it.enabled &&
+                it.user.isBlank() &&
+                it.pass.isBlank()
+        }
+
+        if (usable.isEmpty()) return@synchronized null
+
+        val index = proxyCursor % usable.size
+        proxyCursor = (index + 1) % usable.size
+
+        usable[index]
+    }
 
     // ---------- Cola de solicitudes ----------
     fun requests(): List<Request> = synchronized(lock) { readRequests() }

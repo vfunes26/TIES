@@ -43,9 +43,9 @@ import es.citaasistente.app.data.Settings
 import es.citaasistente.app.data.Stats
 import es.citaasistente.app.data.Status
 import es.citaasistente.app.data.Store
+import es.citaasistente.app.data.ProxyParser
 import es.citaasistente.app.net.Ev
 import com.vfunes26.ties.model.AlertModeManager
-import com.vfunes26.ties.model.ProxyManager
 import com.vfunes26.ties.model.RequestSelector
 import com.vfunes26.ties.model.SelectionMode
 import es.citaasistente.app.net.Mailer
@@ -56,6 +56,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import java.net.InetSocketAddress
+import java.net.Socket
 
 class MainActivity : AppCompatActivity() {
 
@@ -63,7 +65,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var nats: Nationalities
     private lateinit var store: Store
     private lateinit var alertModeManager: AlertModeManager
-    private lateinit var proxyManager: ProxyManager
     private lateinit var adapter: RequestAdapter
 
     private val accs = HashMap<String, Acc>()
@@ -115,7 +116,6 @@ class MainActivity : AppCompatActivity() {
         nats = Nationalities.load(this)
         store = Store.get(this)
         alertModeManager = AlertModeManager(this)
-        proxyManager = ProxyManager(this)
 
         setupAccordions()
         setupSolicitar()
@@ -137,8 +137,8 @@ class MainActivity : AppCompatActivity() {
 
     // ================= Navegación y acordeones =================
     private fun setupAccordions() {
-        listOf("p1", "p2", "a1", "a2", "a3", "s1", "s2", "s3", "s4").forEach { accs[it] = Acc(it) }
-        listOf(listOf("p1", "p2"), listOf("a1", "a2", "a3"), listOf("s1", "s2", "s3", "s4")).forEach { keys ->
+        listOf("p1", "p2", "a1", "a2", "a3", "s1", "s2", "s3", "s4", "s5").forEach { accs[it] = Acc(it) }
+        listOf(listOf("p1", "p2"), listOf("a1", "a2", "a3"), listOf("s1", "s2", "s3", "s4", "s5")).forEach { keys ->
             val list = keys.map { acc(it) }
             list.forEach { it.group = list }
         }
@@ -456,6 +456,7 @@ class MainActivity : AppCompatActivity() {
     // ================= AJUSTES =================
     private fun setupAjustes() {
         loadSettings(store.settings)
+        setupProxyUi()
         v<MaterialButton>("btnSaveS1").setOnClickListener { saveSettings("s1") }
         v<MaterialButton>("btnSaveS2").setOnClickListener { saveSettings("s2") }
         v<MaterialButton>("btnSaveS3").setOnClickListener { saveSettings("s3") }
@@ -508,6 +509,7 @@ class MainActivity : AppCompatActivity() {
         et("etGap").setText(s.minGapSeconds.toString())
         et("etCaptchaTimeout").setText(s.captchaTimeoutMinutes.toString())
         sw("swConsent").isChecked = s.autoConsent
+        sw("swProxyEnabled").isChecked = s.proxyEnabled
 
         for (k in listOf("a1", "s1", "s2", "s3")) acc(k).done(false)
     }
@@ -545,6 +547,7 @@ class MainActivity : AppCompatActivity() {
             minGapSeconds = num("etGap", 45).coerceAtLeast(30),
             captchaTimeoutMinutes = num("etCaptchaTimeout", 5).coerceIn(2, 30),
             autoConsent = sw("swConsent").isChecked,
+            proxyEnabled = sw("swProxyEnabled").isChecked,
         )
     }
 
@@ -610,6 +613,174 @@ class MainActivity : AppCompatActivity() {
         refreshAll()
         toast("Guardado")
     }
+    private fun setupProxyUi() {
+        refreshProxyList()
+
+        v<MaterialButton>("btnProxyImport").setOnClickListener {
+            val raw = et("etProxyImport").text.toString()
+            val (newProxies, invalid) = ProxyParser.parseMany(raw, store.proxies())
+
+            if (newProxies.isEmpty()) {
+                toast(
+                    if (invalid > 0) "No se encontraron proxies válidos."
+                    else "No hay proxies nuevos para importar."
+                )
+                return@setOnClickListener
+            }
+
+            store.saveProxies(store.proxies() + newProxies)
+            et("etProxyImport").setText("")
+            refreshProxyList()
+
+            toast("${newProxies.size} proxy(s) añadidos. Líneas inválidas: $invalid")
+        }
+
+        v<MaterialButton>("btnProxyManage").setOnClickListener {
+            manageProxies()
+        }
+
+        v<MaterialButton>("btnProxyTest").setOnClickListener {
+            testProxyConnections()
+        }
+
+        v<MaterialButton>("btnSaveProxy").setOnClickListener {
+            store.settings = store.settings.copy(
+                proxyEnabled = sw("swProxyEnabled").isChecked
+            )
+
+            acc("s5").done(true)
+            acc("s5").close()
+            refreshProxyList()
+            refreshAll()
+            toast("Configuración de proxies guardada.")
+        }
+    }
+
+    private fun refreshProxyList() {
+        val proxies = store.proxies()
+
+        v<TextView>("tvProxyList").text =
+            if (proxies.isEmpty()) {
+                "No hay proxies importados."
+            } else {
+                proxies.joinToString("\n") { proxy ->
+                    val state = when (proxy.status) {
+                        1 -> "TCP accesible"
+                        2 -> "Error de conexión"
+                        else -> "Sin probar"
+                    }
+
+                    val auth = if (
+                        proxy.user.isNotBlank() || proxy.pass.isNotBlank()
+                    ) {
+                        " · requiere autenticación"
+                    } else {
+                        ""
+                    }
+
+                    "${proxy.label()} · ${proxy.type.uppercase()} · " +
+                        "${if (proxy.enabled) "Activo" else "Desactivado"} · $state$auth"
+                }
+            }
+    }
+
+    private fun manageProxies() {
+        val proxies = store.proxies()
+
+        if (proxies.isEmpty()) {
+            toast("No hay proxies que administrar.")
+            return
+        }
+
+        val labels = proxies.map {
+            "${it.label()} (${if (it.enabled) "Activo" else "Inactivo"})"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Administrar proxies")
+            .setItems(labels) { _, index ->
+                val proxy = proxies[index]
+
+                AlertDialog.Builder(this)
+                    .setTitle(proxy.label())
+                    .setMessage(
+                        "Tipo: ${proxy.type}\n" +
+                            "Autenticación: ${if (proxy.user.isNotBlank()) "Sí" else "No"}\n" +
+                            "Estado: ${proxy.detail.ifBlank { "Sin probar" }}"
+                    )
+                    .setPositiveButton(
+                        if (proxy.enabled) "Desactivar" else "Activar"
+                    ) { _, _ ->
+                        store.updateProxy(proxy.id) {
+                            it.copy(enabled = !it.enabled)
+                        }
+                        refreshProxyList()
+                    }
+                    .setNegativeButton("Eliminar") { _, _ ->
+                        store.saveProxies(
+                            store.proxies().filterNot { it.id == proxy.id }
+                        )
+                        refreshProxyList()
+                    }
+                    .setNeutralButton("Cerrar", null)
+                    .show()
+            }
+            .setNegativeButton("Cerrar", null)
+            .show()
+    }
+
+    private fun testProxyConnections() {
+        val proxies = store.proxies()
+
+        if (proxies.isEmpty()) {
+            toast("Importa primero algún proxy.")
+            return
+        }
+
+        val button = v<MaterialButton>("btnProxyTest")
+        button.isEnabled = false
+        button.text = "Probando conexiones…"
+
+        Thread {
+            var reachable = 0
+
+            proxies.forEach { proxy ->
+                val result = runCatching {
+                    Socket().use { socket ->
+                        socket.connect(
+                            InetSocketAddress(proxy.host, proxy.port),
+                            4000
+                        )
+                    }
+                }
+
+                val ok = result.isSuccess
+                if (ok) reachable++
+
+                store.updateProxy(proxy.id) {
+                    it.copy(
+                        status = if (ok) 1 else 2,
+                        detail = if (ok) {
+                            "Conexión TCP accesible"
+                        } else {
+                            "No conecta: ${
+                                result.exceptionOrNull()?.javaClass?.simpleName ?: "Error"
+                            }"
+                        },
+                        testedAt = System.currentTimeMillis()
+                    )
+                }
+            }
+
+            runOnUiThread {
+                button.isEnabled = true
+                button.text = "Probar conexiones"
+                refreshProxyList()
+                toast("Conexiones TCP accesibles: $reachable de ${proxies.size}")
+            }
+        }.start()
+    }
+
     private fun refreshAll() {
         if (!::adapter.isInitialized) return
         refreshQueue()

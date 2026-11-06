@@ -61,8 +61,10 @@ object ProxyParser {
         ).find(s)
 
         if (scheme != null) {
-            if (scheme.groupValues[1].lowercase().startsWith("socks")) {
-                type = "socks5"
+            type = when (scheme.groupValues[1].lowercase()) {
+                "https" -> "https"
+                "socks5", "socks5h" -> "socks5"
+                else -> "http"
             }
             s = s.substring(scheme.value.length)
         }
