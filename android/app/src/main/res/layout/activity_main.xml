@@ -330,6 +330,13 @@
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/swTgResults" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="4dp" android:text="Resultados (CON CITA / fallida)"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swTgIntake" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="4dp" android:text="Recibir solicitudes desde mi chat de Telegram"/>
+        <TextView
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Solo se aceptan mensajes del Chat ID numérico configurado. Usa /ayuda para consultar el formato."
+            android:textSize="12sp" android:paddingTop="4dp"/>
         <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
             android:id="@+id/btnTgTest" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="6dp" android:text="Enviar mensaje de prueba"/>

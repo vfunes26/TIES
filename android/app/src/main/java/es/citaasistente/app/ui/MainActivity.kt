@@ -51,6 +51,7 @@ import com.vfunes26.ties.model.SelectionMode
 import es.citaasistente.app.net.Mailer
 import es.citaasistente.app.net.Reporter
 import es.citaasistente.app.net.Telegram
+import es.citaasistente.app.net.TelegramIntakeService
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -122,6 +123,7 @@ class MainActivity : AppCompatActivity() {
         setupAlertas()
         setupAjustes()
         setupNav()
+        syncTelegramIntake(store.settings)
 
         Notifier.ensureChannels(this)
         HealthWorker.schedule(this)
@@ -476,63 +478,138 @@ class MainActivity : AppCompatActivity() {
     private fun num(name: String, def: Int) = et(name).text.toString().trim().toIntOrNull() ?: def
 
     private fun loadSettings(s: Settings) {
-        sw("swAlertsApp").isChecked = s.sourceAlertsApp; sw("swTelegramSrc").isChecked = s.sourceTelegram
-        sw("swStrict").isChecked = s.strictMatch; sw("swAutoLaunch").isChecked = s.autoLaunch; sw("swScreenOn").isChecked = s.screenOnOnAlert
+        sw("swAlertsApp").isChecked = s.sourceAlertsApp
+        sw("swTelegramSrc").isChecked = s.sourceTelegram
+        sw("swStrict").isChecked = s.strictMatch
+        sw("swAutoLaunch").isChecked = s.autoLaunch
+        sw("swScreenOn").isChecked = s.screenOnOnAlert
         et("etSilence").setText(s.silenceHours.toString())
-        sw("swTg").isChecked = s.telegramEnabled; et("etToken").setText(s.telegramToken); et("etChat").setText(s.telegramChatId)
-        sw("swTgAlerts").isChecked = s.tgAlerts; sw("swTgProcess").isChecked = s.tgProcess; sw("swTgResults").isChecked = s.tgResults
-        sw("swMail").isChecked = s.mailEnabled; et("etSmtpHost").setText(s.smtpHost); et("etSmtpPort").setText(s.smtpPort.toString())
-        et("etSmtpUser").setText(s.smtpUser); et("etSmtpPass").setText(s.smtpPass); et("etMailTo").setText(s.mailTo)
-        sw("swMailReg").isChecked = s.mailOnRegistered; sw("swMailResult").isChecked = s.mailOnResult
-        et("etBatch").setText(s.batchSize.toString()); et("etBatchPause").setText(s.batchPauseMinutes.toString())
-        et("etRetry").setText(s.retryMinutes.toString()); et("etGap").setText(s.minGapSeconds.toString())
-        et("etCaptchaTimeout").setText(s.captchaTimeoutMinutes.toString()); sw("swConsent").isChecked = s.autoConsent
+
+        sw("swTg").isChecked = s.telegramEnabled
+        et("etToken").setText(s.telegramToken)
+        et("etChat").setText(s.telegramChatId)
+        sw("swTgAlerts").isChecked = s.tgAlerts
+        sw("swTgProcess").isChecked = s.tgProcess
+        sw("swTgResults").isChecked = s.tgResults
+        sw("swTgIntake").isChecked = s.tgIntake
+
+        sw("swMail").isChecked = s.mailEnabled
+        et("etSmtpHost").setText(s.smtpHost)
+        et("etSmtpPort").setText(s.smtpPort.toString())
+        et("etSmtpUser").setText(s.smtpUser)
+        et("etSmtpPass").setText(s.smtpPass)
+        et("etMailTo").setText(s.mailTo)
+        sw("swMailReg").isChecked = s.mailOnRegistered
+        sw("swMailResult").isChecked = s.mailOnResult
+
+        et("etBatch").setText(s.batchSize.toString())
+        et("etBatchPause").setText(s.batchPauseMinutes.toString())
+        et("etRetry").setText(s.retryMinutes.toString())
+        et("etGap").setText(s.minGapSeconds.toString())
+        et("etCaptchaTimeout").setText(s.captchaTimeoutMinutes.toString())
+        sw("swConsent").isChecked = s.autoConsent
+
         for (k in listOf("a1", "s1", "s2", "s3")) acc(k).done(false)
     }
 
     private fun readSettings(): Settings {
         val d = store.settings
         return d.copy(
-            sourceAlertsApp = sw("swAlertsApp").isChecked, sourceTelegram = sw("swTelegramSrc").isChecked,
-            strictMatch = sw("swStrict").isChecked, autoLaunch = sw("swAutoLaunch").isChecked, screenOnOnAlert = sw("swScreenOn").isChecked,
+            sourceAlertsApp = sw("swAlertsApp").isChecked,
+            sourceTelegram = sw("swTelegramSrc").isChecked,
+            strictMatch = sw("swStrict").isChecked,
+            autoLaunch = sw("swAutoLaunch").isChecked,
+            screenOnOnAlert = sw("swScreenOn").isChecked,
             silenceHours = num("etSilence", 0).coerceAtLeast(0),
-            telegramEnabled = sw("swTg").isChecked, telegramToken = et("etToken").text.toString().trim(),
+
+            telegramEnabled = sw("swTg").isChecked,
+            telegramToken = et("etToken").text.toString().trim(),
             telegramChatId = et("etChat").text.toString().trim(),
-            tgAlerts = sw("swTgAlerts").isChecked, tgProcess = sw("swTgProcess").isChecked, tgResults = sw("swTgResults").isChecked,
-            mailEnabled = sw("swMail").isChecked, smtpHost = et("etSmtpHost").text.toString().trim(),
-            smtpPort = num("etSmtpPort", 587), smtpUser = et("etSmtpUser").text.toString().trim(),
-            smtpPass = et("etSmtpPass").text.toString(), mailTo = et("etMailTo").text.toString().trim(),
-            mailOnRegistered = sw("swMailReg").isChecked, mailOnResult = sw("swMailResult").isChecked,
-            batchSize = num("etBatch", 5).coerceIn(1, 50), batchPauseMinutes = num("etBatchPause", 10).coerceIn(0, 240),
-            retryMinutes = num("etRetry", 5).coerceAtLeast(3), minGapSeconds = num("etGap", 45).coerceAtLeast(30),
-            captchaTimeoutMinutes = num("etCaptchaTimeout", 5).coerceIn(2, 30), autoConsent = sw("swConsent").isChecked,
+            tgAlerts = sw("swTgAlerts").isChecked,
+            tgProcess = sw("swTgProcess").isChecked,
+            tgResults = sw("swTgResults").isChecked,
+            tgIntake = sw("swTgIntake").isChecked,
+
+            mailEnabled = sw("swMail").isChecked,
+            smtpHost = et("etSmtpHost").text.toString().trim(),
+            smtpPort = num("etSmtpPort", 587),
+            smtpUser = et("etSmtpUser").text.toString().trim(),
+            smtpPass = et("etSmtpPass").text.toString(),
+            mailTo = et("etMailTo").text.toString().trim(),
+            mailOnRegistered = sw("swMailReg").isChecked,
+            mailOnResult = sw("swMailResult").isChecked,
+
+            batchSize = num("etBatch", 5).coerceIn(1, 50),
+            batchPauseMinutes = num("etBatchPause", 10).coerceIn(0, 240),
+            retryMinutes = num("etRetry", 5).coerceAtLeast(3),
+            minGapSeconds = num("etGap", 45).coerceAtLeast(30),
+            captchaTimeoutMinutes = num("etCaptchaTimeout", 5).coerceIn(2, 30),
+            autoConsent = sw("swConsent").isChecked,
         )
+    }
+
+    private fun syncTelegramIntake(s: Settings) {
+        val service = Intent(this, TelegramIntakeService::class.java)
+
+        val validChat = Regex("^-?\\d+$").matches(s.telegramChatId.trim())
+        val shouldRun = s.tgIntake && s.telegramReady() && validChat
+
+        if (shouldRun) {
+            ContextCompat.startForegroundService(this, service)
+        } else {
+            stopService(service)
+        }
     }
 
     private fun saveSettings(key: String) {
         val s = readSettings()
         val errs = ArrayList<String>()
+
         if (key == "s1" && s.telegramEnabled) {
-            if (!Regex("^\\d{5,}:[A-Za-z0-9_-]{20,}$").matches(s.telegramToken)) errs.add("El token de Telegram no tiene el formato de @BotFather (123456:ABC…).")
-            if (!Regex("^(-?\\d+|@\\w+)$").matches(s.telegramChatId)) errs.add("El Chat ID debe ser un número (puede empezar por -) o @canal.")
+            if (!Regex("^\\d{5,}:[A-Za-z0-9_-]{20,}$").matches(s.telegramToken)) {
+                errs.add("El token de Telegram no tiene el formato de @BotFather (123456:ABC…).")
+            }
+            if (!Regex("^(-?\\d+|@\\w+)$").matches(s.telegramChatId)) {
+                errs.add("El Chat ID debe ser un número (puede empezar por -) o @canal.")
+            }
         }
+
+        if (key == "s1" && s.tgIntake) {
+            if (!s.telegramEnabled || !s.telegramReady()) {
+                errs.add("Activa Telegram y configura el token y el Chat ID antes de recibir solicitudes.")
+            }
+            if (!Regex("^-?\\d+$").matches(s.telegramChatId.trim())) {
+                errs.add("La recepción requiere un Chat ID numérico. No admite @canal.")
+            }
+        }
+
         if (key == "s2" && s.mailEnabled) {
             val mail = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
             if (s.smtpHost.isBlank()) errs.add("Falta el servidor SMTP.")
-            if (s.smtpPort !in listOf(465, 587)) errs.add("Usa el puerto 587 (STARTTLS) o 465 (SSL).")
+            if (s.smtpPort !in listOf(465, 587)) {
+                errs.add("Usa el puerto 587 (STARTTLS) o 465 (SSL).")
+            }
             if (!mail.matches(s.smtpUser)) errs.add("El usuario/remitente debe ser un correo válido.")
             if (s.smtpPass.isBlank()) errs.add("Falta la contraseña de aplicación.")
-            if (!mail.matches(s.mailTo.split(",", ";").first().trim())) errs.add("El correo destinatario no es válido.")
+            if (!mail.matches(s.mailTo.split(",", ";").first().trim())) {
+                errs.add("El correo destinatario no es válido.")
+            }
         }
-        if (errs.isNotEmpty()) { problems(errs); acc(key).done(false); return }
+
+        if (errs.isNotEmpty()) {
+            problems(errs)
+            acc(key).done(false)
+            return
+        }
+
         store.settings = s
+        syncTelegramIntake(s)
         loadSettings(s)
-        acc(key).done(true); acc(key).close()
+        acc(key).done(true)
+        acc(key).close()
         refreshAll()
         toast("Guardado")
     }
-
-    // ================= Refresco general =================
     private fun refreshAll() {
         if (!::adapter.isInitialized) return
         refreshQueue()
