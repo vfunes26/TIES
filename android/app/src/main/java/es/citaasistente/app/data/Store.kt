@@ -14,15 +14,61 @@ import org.json.JSONObject
  */
 class Store private constructor(context: Context) {
 
-    private val secure: SharedPreferences = try {
-        val key = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
-        EncryptedSharedPreferences.create(
-            context, "citaasistente_secure", key,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+    private val secure: SharedPreferences = run {
+        val encrypted = try {
+            val key = MasterKey.Builder(context)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build()
+
+            EncryptedSharedPreferences.create(
+                context,
+                "citaasistente_secure",
+                key,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
+            )
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "No se pudo inicializar el almacenamiento cifrado. No se usarán datos sin cifrar.",
+                e
+            )
+        }
+
+        // Migrar datos antiguos del almacenamiento alternativo, si existen.
+        val legacy = context.getSharedPreferences(
+            "citaasistente_fallback",
+            Context.MODE_PRIVATE
         )
-    } catch (e: Exception) {
-        context.getSharedPreferences("citaasistente_fallback", Context.MODE_PRIVATE)
+
+        if (legacy.all.isNotEmpty()) {
+            val editor = encrypted.edit()
+
+            legacy.all.forEach { (name, value) ->
+                if (!encrypted.contains(name)) {
+                    when (value) {
+                        is String -> editor.putString(name, value)
+                        is Boolean -> editor.putBoolean(name, value)
+                        is Int -> editor.putInt(name, value)
+                        is Long -> editor.putLong(name, value)
+                        is Float -> editor.putFloat(name, value)
+                        is Set<*> -> editor.putStringSet(
+                            name,
+                            value.filterIsInstance<String>().toSet()
+                        )
+                    }
+                }
+            }
+
+            check(editor.commit()) {
+                "No se pudieron migrar los datos al almacenamiento cifrado."
+            }
+
+            check(legacy.edit().clear().commit()) {
+                "No se pudo limpiar el almacenamiento antiguo."
+            }
+        }
+
+        encrypted
     }
 
     // Estado no sensible: registro de eventos y marcas de tiempo.
@@ -33,6 +79,58 @@ class Store private constructor(context: Context) {
     var settings: Settings
         get() = secure.getString("settings2", null)?.let { runCatching { Settings.fromJson(JSONObject(it)) }.getOrNull() } ?: Settings()
         set(v) { secure.edit().putString("settings2", v.toJson().toString()).apply() }
+
+    // ---------- Credenciales y estado de funciones ----------
+    var authUser: String
+        get() = secure.getString("authUser", "") ?: ""
+        set(v) { secure.edit().putString("authUser", v).apply() }
+
+    var authHash: String
+        get() = secure.getString("authHash", "") ?: ""
+        set(v) { secure.edit().putString("authHash", v).apply() }
+
+    var intakeOffset: Long
+        get() = secure.getLong("intakeOffset", 0L)
+        set(v) { secure.edit().putLong("intakeOffset", v).apply() }
+
+    var proxyCursor: Int
+        get() = secure.getInt("proxyCursor", 0)
+        set(v) { secure.edit().putInt("proxyCursor", v.coerceAtLeast(0)).apply() }
+
+    // ---------- Gestión de proxies ----------
+    fun proxies(): List<ProxyEntry> = synchronized(lock) {
+        val raw = secure.getString("proxies", null) ?: return@synchronized emptyList()
+        val arr = runCatching { JSONArray(raw) }.getOrNull()
+            ?: return@synchronized emptyList()
+
+        val result = ArrayList<ProxyEntry>()
+        for (i in 0 until arr.length()) {
+            runCatching {
+                result.add(ProxyEntry.fromJson(arr.getJSONObject(i)))
+            }
+        }
+        result
+    }
+
+    fun saveProxies(list: List<ProxyEntry>) = synchronized(lock) {
+        val arr = JSONArray()
+        list.forEach { arr.put(it.toJson()) }
+        secure.edit().putString("proxies", arr.toString()).apply()
+    }
+
+    fun updateProxy(id: String, change: (ProxyEntry) -> ProxyEntry): ProxyEntry? =
+        synchronized(lock) {
+            val list = proxies().toMutableList()
+            val index = list.indexOfFirst { it.id == id }
+            if (index < 0) return@synchronized null
+
+            val updated = change(list[index])
+            list[index] = updated
+            val arr = JSONArray()
+            list.forEach { arr.put(it.toJson()) }
+            secure.edit().putString("proxies", arr.toString()).apply()
+            updated
+        }
 
     // ---------- Cola de solicitudes ----------
     fun requests(): List<Request> = synchronized(lock) { readRequests() }

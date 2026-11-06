@@ -37,13 +37,19 @@ object Reporter {
         store.appendEvent(kind, (req?.let { "${it.displayName()}: " } ?: "") + text)
     }
 
-    fun notify(ctx: Context, ev: Ev, req: Request?, text: String) {
+    fun notify(
+        ctx: Context,
+        ev: Ev,
+        req: Request?,
+        text: String,
+        skipTelegram: Boolean = false
+    ) {
         val store = Store.get(ctx)
         val s = store.settings
         val catalog = runCatching { Catalog.load(ctx) }.getOrNull()
         val fresh = req?.let { store.request(it.id) } ?: req
 
-        if (s.telegramReady()) {
+        if (s.telegramReady() && !skipTelegram) {
             val allowed = when (ev) {
                 Ev.ALERTA -> s.tgAlerts
                 Ev.INICIO, Ev.HUMANO, Ev.SIN_CITAS, Ev.REGISTRADA, Ev.INFO -> s.tgProcess
