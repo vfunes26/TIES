@@ -25,6 +25,7 @@ data class Settings(
     val tgAlerts: Boolean = true,           // alertas de cita detectada
     val tgProcess: Boolean = true,          // inicio / captcha pendiente / sin citas
     val tgResults: Boolean = true,          // CON CITA / fallida
+    val tgIntake: Boolean = false,          // recibir solicitudes enviadas al bot de Telegram
     // --- Correo (SMTP) ---
     val mailEnabled: Boolean = false,
     val smtpHost: String = "smtp.gmail.com",
@@ -34,6 +35,8 @@ data class Settings(
     val mailTo: String = "",
     val mailOnRegistered: Boolean = true,
     val mailOnResult: Boolean = true,
+    // --- Proxy ---
+    val proxyEnabled: Boolean = false,      // ON: se usan los proxies en orden circular; OFF: IP normal
 ) {
     fun telegramReady() = telegramEnabled && telegramToken.isNotBlank() && telegramChatId.isNotBlank()
     fun mailReady() = mailEnabled && smtpHost.isNotBlank() && smtpUser.isNotBlank() && smtpPass.isNotBlank() && mailTo.isNotBlank()
@@ -45,7 +48,8 @@ data class Settings(
         .put("batchPauseMinutes", batchPauseMinutes).put("minGapSeconds", minGapSeconds)
         .put("captchaTimeoutMinutes", captchaTimeoutMinutes)
         .put("telegramEnabled", telegramEnabled).put("telegramToken", telegramToken).put("telegramChatId", telegramChatId)
-        .put("tgAlerts", tgAlerts).put("tgProcess", tgProcess).put("tgResults", tgResults)
+        .put("tgAlerts", tgAlerts).put("tgProcess", tgProcess).put("tgResults", tgResults).put("tgIntake", tgIntake)
+        .put("proxyEnabled", proxyEnabled)
         .put("mailEnabled", mailEnabled).put("smtpHost", smtpHost).put("smtpPort", smtpPort)
         .put("smtpUser", smtpUser).put("smtpPass", smtpPass).put("mailTo", mailTo)
         .put("mailOnRegistered", mailOnRegistered).put("mailOnResult", mailOnResult)
@@ -70,6 +74,8 @@ data class Settings(
                 telegramToken = o.optString("telegramToken"), telegramChatId = o.optString("telegramChatId"),
                 tgAlerts = o.optBoolean("tgAlerts", d.tgAlerts), tgProcess = o.optBoolean("tgProcess", d.tgProcess),
                 tgResults = o.optBoolean("tgResults", d.tgResults),
+                tgIntake = o.optBoolean("tgIntake", d.tgIntake),
+                proxyEnabled = o.optBoolean("proxyEnabled", d.proxyEnabled),
                 mailEnabled = o.optBoolean("mailEnabled", d.mailEnabled),
                 smtpHost = o.optString("smtpHost", d.smtpHost), smtpPort = o.optInt("smtpPort", d.smtpPort),
                 smtpUser = o.optString("smtpUser"), smtpPass = o.optString("smtpPass"), mailTo = o.optString("mailTo"),
