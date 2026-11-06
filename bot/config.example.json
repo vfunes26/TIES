@@ -1,0 +1,39 @@
+{
+  "browserProfile": "test",
+  "rotateProxyOnTramiteBlock": true,
+  "baseUrl": "https://icp.administracionelectronica.gob.es",
+  "regionSelectPath": "/icpco/citar",
+  "location": "Valencia",
+  "officeLabel": "Cualquier oficina",
+  "tramiteLabel": "POLICÍA-TOMA DE HUELLAS (EXPEDICIÓN DE TARJETA) INICIAL, RENOVACIÓN, DUPLICADO Y LEY 14/2013",
+  "tramiteValue": "4010",
+  "offices": [
+    "CNP COMISARIA DE MARÍTIMO EXTRANJERÍA, ERNESTO ANASTASIO , 60, VALENCIA",
+    "CNP COMISARIA PATRAIX EXTRANJERIA, GREMIS, 6, VALENCIA",
+    "CNP VALENCIA CALLE ZAPADORES 52, Zapadores, 52, Valencia",
+    "CNP-COMISARIA DE BAILEN, Bailen, 9, VALENCIA",
+    "CNP COMISARIA DE PATERNA, De les Roses, 27, Paterna",
+    "CNP COMISARIA DE SAGUNTO, Progreso, 14, SAGUNTO",
+    "CNP COMISARIA DE BURJASOT, C/ Doctor Joan Pesset , 2, Burjassot",
+    "CNP COMISARIA DE ALZIRA, Pere Morell, 4, ALZIRA",
+    "OUE3, Avda. Constitución, 116, Valencia"
+  ],
+  "minCitaDate": "2026-10-20",
+  "personalData": {
+    "nie": "",
+    "nombre": "NOMBRE APELLIDOS",
+    "paisNac": "PERU",
+    "telefono": "600000000",
+    "email": "tu@correo.com"
+  },
+  "keepBrowserOpenOnFailure": true,
+  "notifications": {
+    "failureCountThreshold": 5,
+    "criticalAfterSeconds": 60,
+    "telegram": {
+      "botToken": "TU_TOKEN_DE_BOTFATHER",
+      "chatId": "TU_CHAT_ID"
+    }
+  },
+  "proxies": []
+}
