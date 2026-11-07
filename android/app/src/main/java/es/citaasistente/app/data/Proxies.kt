@@ -67,6 +67,8 @@ object ProxyParser {
                 else -> "http"
             }
             s = s.substring(scheme.value.length)
+        } else if ("://" in s) {
+            return null
         }
 
         var user = ""
@@ -75,12 +77,18 @@ object ProxyParser {
         val port: Int
 
         if (s.contains("@")) {
-            val creds = s.substringBeforeLast("@")
-            val hp = s.substringAfterLast("@").split(":")
-            if (hp.size != 2) return null
+            if (s.count { it == '@' } != 1) return null
+
+            val creds = s.substringBefore("@")
+            val hp = s.substringAfter("@").split(":")
+
+            if (hp.size != 2 || !creds.contains(":")) return null
 
             user = creds.substringBefore(":")
             pass = creds.substringAfter(":", "")
+
+            if (user.isBlank() || pass.isBlank()) return null
+
             host = hp[0]
             port = hp[1].toIntOrNull() ?: return null
         } else {
@@ -96,13 +104,17 @@ object ProxyParser {
                     port = p[1].toIntOrNull() ?: return null
                     user = p[2]
                     pass = p[3]
+
+                    if (user.isBlank() || pass.isBlank()) return null
                 }
                 else -> return null
             }
         }
 
         if (host.isBlank() ||
-            host.any { it.isWhitespace() } ||
+            host.any {
+                it.isWhitespace() || it == '/' || it == '\\' || it == '@'
+            } ||
             port !in 1..65535
         ) return null
 

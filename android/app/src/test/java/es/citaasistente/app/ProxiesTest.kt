@@ -44,6 +44,17 @@ class ProxiesTest {
     }
 
     @Test
+    fun aceptaDosPuntosDentroDeLaClave() {
+        val proxy = ProxyParser.parseLine(
+            "http://usuario:clave:adicional@proxy.example.com:8080"
+        )
+
+        assertNotNull(proxy)
+        assertEquals("usuario", proxy?.user)
+        assertEquals("clave:adicional", proxy?.pass)
+    }
+
+    @Test
     fun esquemaHttpsSeConserva() {
         val proxy = ProxyParser.parseLine(
             "https://proxy.example.com:443"
@@ -52,6 +63,69 @@ class ProxiesTest {
         assertNotNull(proxy)
         assertEquals("https", proxy?.type)
         assertEquals(443, proxy?.port)
+    }
+
+    @Test
+    fun rechazaCredencialesIncompletas() {
+        assertNull(
+            ProxyParser.parseLine(
+                "http://usuario@proxy.example.com:8080"
+            )
+        )
+        assertNull(
+            ProxyParser.parseLine(
+                "http://:clave@proxy.example.com:8080"
+            )
+        )
+        assertNull(
+            ProxyParser.parseLine(
+                "http://usuario:@proxy.example.com:8080"
+            )
+        )
+        assertNull(
+            ProxyParser.parseLine(
+                "proxy.example.com:8080:usuario:"
+            )
+        )
+        assertNull(
+            ProxyParser.parseLine(
+                "proxy.example.com:8080::clave"
+            )
+        )
+    }
+
+    @Test
+    fun rechazaSeparadoresDeCredencialesMalformados() {
+        assertNull(
+            ProxyParser.parseLine(
+                "usuario:clave@@proxy.example.com:8080"
+            )
+        )
+        assertNull(
+            ProxyParser.parseLine(
+                "usuario:clave@proxy@example.com:8080"
+            )
+        )
+    }
+
+    @Test
+    fun rechazaHostsMalformados() {
+        assertNull(
+            ProxyParser.parseLine("proxy.example.com/ruta:8080")
+        )
+        assertNull(
+            ProxyParser.parseLine("proxy.example.com\\ruta:8080")
+        )
+        assertNull(
+            ProxyParser.parseLine("proxy example.com:8080")
+        )
+    }
+
+    @Test
+    fun rechazaEsquemasNoSoportados() {
+        assertNull(
+            ProxyParser.parseLine("ftp://proxy.example.com:21")
+        )
     }
 
     @Test
