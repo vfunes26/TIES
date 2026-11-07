@@ -8,9 +8,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * Almacén local. Solicitudes (datos personales) y ajustes (incluye token de Telegram y contraseña SMTP)
- * se guardan CIFRADOS con Android Keystore. Los datos solo salen del móvil hacia: la sede oficial
- * (autorrelleno) y los destinos que tú configures (tu bot de Telegram y tu correo).
+ * Almacén local. Solicitudes y ajustes se guardan cifrados
+ * con Android Keystore.
  */
 class Store private constructor(context: Context) {
 
@@ -29,12 +28,12 @@ class Store private constructor(context: Context) {
             )
         } catch (e: Exception) {
             throw IllegalStateException(
-                "No se pudo inicializar el almacenamiento cifrado. No se usarán datos sin cifrar.",
+                "No se pudo inicializar el almacenamiento cifrado. " +
+                    "No se usarán datos sin cifrar.",
                 e
             )
         }
 
-        // Migrar datos antiguos del almacenamiento alternativo, si existen.
         val legacy = context.getSharedPreferences(
             "citaasistente_fallback",
             Context.MODE_PRIVATE
@@ -78,10 +77,12 @@ class Store private constructor(context: Context) {
             Context.MODE_PRIVATE
         )
 
-        if (legacyProxy.contains("proxy_enabled") ||
+        if (
+            legacyProxy.contains("proxy_enabled") ||
             legacyProxy.contains("proxy_list_json")
         ) {
             val raw = legacyProxy.getString("proxy_list_json", null)
+
             val oldArray = if (raw == null) {
                 JSONArray()
             } else {
@@ -134,7 +135,9 @@ class Store private constructor(context: Context) {
 
                         editor.putString(
                             "settings2",
-                            current.copy(proxyEnabled = true).toJson().toString()
+                            current.copy(proxyEnabled = true)
+                                .toJson()
+                                .toString()
                         )
                     }
 
@@ -155,11 +158,12 @@ class Store private constructor(context: Context) {
         }
     }
 
-    // Estado operativo no sensible: marcas de tiempo y diagnósticos generales.
+    // Estado operativo no sensible.
     private val plain: SharedPreferences = context.getSharedPreferences(
         "citaasistente_state",
         Context.MODE_PRIVATE
     )
+
     private val lock = Any()
 
     init {
@@ -167,9 +171,8 @@ class Store private constructor(context: Context) {
     }
 
     /**
-     * Migra el registro histórico desde preferencias sin cifrar.
-     * Conserva los eventos existentes y elimina el original solo
-     * después de confirmar la escritura en el almacenamiento cifrado.
+     * Migra eventos históricos al almacenamiento cifrado.
+     * Solo elimina el original después de confirmar la escritura.
      */
     private fun migrateEventsToSecure() {
         val legacyRaw = plain.getString("events", null) ?: return
@@ -214,10 +217,10 @@ class Store private constructor(context: Context) {
             }
         }
 
-        // Priorizar el registro cifrado existente.
+        // Priorizar los eventos cifrados existentes.
         appendUnique(secureEvents)
 
-        // Incorporar eventos históricos sin duplicarlos.
+        // Incorporar los históricos sin duplicarlos.
         appendUnique(legacyEvents)
 
         check(
@@ -236,101 +239,99 @@ class Store private constructor(context: Context) {
             "No se pudo limpiar el registro antiguo de eventos."
         }
     }
-            throw IllegalStateException(
-                "El registro cifrado de eventos no es válido. No se eliminarán los datos originales.",
-                it
-            )
-        }
-    }
-
-    // Conservar primero los eventos cifrados más recientes
-    // y después incorporar los eventos históricos.
-    val merged = JSONArray()
-    val seen = mutableSetOf<String>()
-
-    fun appendUnique(source: JSONArray) {
-        for (i in 0 until source.length()) {
-            val item = source.optJSONObject(i) ?: continue
-            val key = item.toString()
-
-            if (seen.add(key) && merged.length() < 100) {
-                merged.put(item)
-            }
-        }
-    }
-
-    appendUnique(secureEvents)
-    appendUnique(legacyEvents)
-
-    check(
-        secure.edit()
-            .putString("events", merged.toString())
-            .commit()
-    ) {
-        "No se pudo migrar el registro de eventos al almacenamiento cifrado."
-    }
-
-    check(plain.edit().remove("events").commit()) {
-        "No se pudo limpiar el registro antiguo de eventos."
-    }
-}
 
     // ---------- Ajustes ----------
+
     var settings: Settings
-        get() = secure.getString("settings2", null)?.let { runCatching { Settings.fromJson(JSONObject(it)) }.getOrNull() } ?: Settings()
-        set(v) { secure.edit().putString("settings2", v.toJson().toString()).apply() }
+        get() = secure.getString("settings2", null)
+            ?.let {
+                runCatching {
+                    Settings.fromJson(JSONObject(it))
+                }.getOrNull()
+            } ?: Settings()
+
+        set(v) {
+            secure.edit()
+                .putString("settings2", v.toJson().toString())
+                .apply()
+        }
 
     // ---------- Credenciales y estado de funciones ----------
+
     var authUser: String
         get() = secure.getString("authUser", "") ?: ""
-        set(v) { secure.edit().putString("authUser", v).apply() }
+        set(v) {
+            secure.edit().putString("authUser", v).apply()
+        }
 
     var authHash: String
         get() = secure.getString("authHash", "") ?: ""
-        set(v) { secure.edit().putString("authHash", v).apply() }
+        set(v) {
+            secure.edit().putString("authHash", v).apply()
+        }
 
     var intakeOffset: Long
         get() = secure.getLong("intakeOffset", 0L)
-        set(v) { secure.edit().putLong("intakeOffset", v).apply() }
+        set(v) {
+            secure.edit().putLong("intakeOffset", v).apply()
+        }
 
     var proxyCursor: Int
         get() = secure.getInt("proxyCursor", 0)
-        set(v) { secure.edit().putInt("proxyCursor", v.coerceAtLeast(0)).apply() }
+        set(v) {
+            secure.edit().putInt("proxyCursor", v.coerceAtLeast(0)).apply()
+        }
 
     // ---------- Gestión de proxies ----------
+
     fun proxies(): List<ProxyEntry> = synchronized(lock) {
-        val raw = secure.getString("proxies", null) ?: return@synchronized emptyList()
+        val raw = secure.getString("proxies", null)
+            ?: return@synchronized emptyList()
+
         val arr = runCatching { JSONArray(raw) }.getOrNull()
             ?: return@synchronized emptyList()
 
         val result = ArrayList<ProxyEntry>()
+
         for (i in 0 until arr.length()) {
             runCatching {
                 result.add(ProxyEntry.fromJson(arr.getJSONObject(i)))
             }
         }
+
         result
     }
 
     fun saveProxies(list: List<ProxyEntry>) = synchronized(lock) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }
-        secure.edit().putString("proxies", arr.toString()).apply()
+
+        secure.edit()
+            .putString("proxies", arr.toString())
+            .apply()
     }
 
-    fun updateProxy(id: String, change: (ProxyEntry) -> ProxyEntry): ProxyEntry? =
-        synchronized(lock) {
-            val list = proxies().toMutableList()
-            val index = list.indexOfFirst { it.id == id }
-            if (index < 0) return@synchronized null
+    fun updateProxy(
+        id: String,
+        change: (ProxyEntry) -> ProxyEntry
+    ): ProxyEntry? = synchronized(lock) {
+        val list = proxies().toMutableList()
+        val index = list.indexOfFirst { it.id == id }
 
-            val updated = change(list[index])
-            list[index] = updated
-            val arr = JSONArray()
-            list.forEach { arr.put(it.toJson()) }
-            secure.edit().putString("proxies", arr.toString()).apply()
-            updated
-        }
+        if (index < 0) return@synchronized null
+
+        val updated = change(list[index])
+        list[index] = updated
+
+        val arr = JSONArray()
+        list.forEach { arr.put(it.toJson()) }
+
+        secure.edit()
+            .putString("proxies", arr.toString())
+            .apply()
+
+        updated
+    }
 
     // ---------- Selección secuencial de proxies ----------
 
@@ -350,56 +351,107 @@ class Store private constructor(context: Context) {
     }
 
     // ---------- Cola de solicitudes ----------
-    fun requests(): List<Request> = synchronized(lock) { readRequests() }
+
+    fun requests(): List<Request> = synchronized(lock) {
+        readRequests()
+    }
 
     private fun readRequests(): List<Request> {
-        val raw = secure.getString("requests", null) ?: return emptyList()
-        val arr = runCatching { JSONArray(raw) }.getOrNull() ?: return emptyList()
+        val raw = secure.getString("requests", null)
+            ?: return emptyList()
+
+        val arr = runCatching { JSONArray(raw) }.getOrNull()
+            ?: return emptyList()
+
         val out = ArrayList<Request>(arr.length())
-        for (i in 0 until arr.length()) runCatching { out.add(Request.fromJson(arr.getJSONObject(i))) }
+
+        for (i in 0 until arr.length()) {
+            runCatching {
+                out.add(Request.fromJson(arr.getJSONObject(i)))
+            }
+        }
+
         return out
     }
 
     private fun writeRequests(list: List<Request>) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }
-        secure.edit().putString("requests", arr.toString()).apply()
+
+        secure.edit()
+            .putString("requests", arr.toString())
+            .apply()
     }
 
-    fun request(id: String): Request? = requests().firstOrNull { it.id == id }
+    fun request(id: String): Request? =
+        requests().firstOrNull { it.id == id }
 
-    fun addRequest(r: Request) = synchronized(lock) { writeRequests(readRequests() + r) }
+    fun addRequest(r: Request) = synchronized(lock) {
+        writeRequests(readRequests() + r)
+    }
 
     /** Modifica una solicitud de forma atómica y devuelve la versión actualizada. */
-    fun updateRequest(id: String, change: (Request) -> Request): Request? = synchronized(lock) {
+    fun updateRequest(
+        id: String,
+        change: (Request) -> Request
+    ): Request? = synchronized(lock) {
         val list = readRequests().toMutableList()
         val i = list.indexOfFirst { it.id == id }
+
         if (i < 0) return null
-        val updated = change(list[i]).copy(updatedAt = System.currentTimeMillis())
+
+        val updated = change(list[i])
+            .copy(updatedAt = System.currentTimeMillis())
+
         list[i] = updated
         writeRequests(list)
+
         updated
     }
 
-    fun removeRequest(id: String) = synchronized(lock) { writeRequests(readRequests().filter { it.id != id }) }
+    fun removeRequest(id: String) = synchronized(lock) {
+        writeRequests(readRequests().filter { it.id != id })
+    }
 
-    fun addHistory(id: String, kind: String, text: String): Request? = updateRequest(id) {
-        val h = (listOf(HistoryItem(System.currentTimeMillis(), kind, text.take(600))) + it.history).take(80)
+    fun addHistory(
+        id: String,
+        kind: String,
+        text: String
+    ): Request? = updateRequest(id) {
+        val h = (
+            listOf(
+                HistoryItem(
+                    System.currentTimeMillis(),
+                    kind,
+                    text.take(600)
+                )
+            ) + it.history
+        ).take(80)
+
         it.copy(history = h)
     }
 
     // ---------- Estado de alertas / salud ----------
+
     var lastAlertAt: Long
         get() = plain.getLong("lastAlertAt", 0L)
-        set(v) { plain.edit().putLong("lastAlertAt", v).apply() }
+        set(v) {
+            plain.edit().putLong("lastAlertAt", v).apply()
+        }
 
     var lastHealthIssues: String
         get() = plain.getString("lastHealthIssues", "") ?: ""
-        set(v) { plain.edit().putString("lastHealthIssues", v).apply() }
+        set(v) {
+            plain.edit().putString("lastHealthIssues", v).apply()
+        }
 
     var listenerConnectedAt: Long
         get() = plain.getLong("listenerConnectedAt", 0L)
-        set(v) { plain.edit().putLong("listenerConnectedAt", v).apply() }
+        set(v) {
+            plain.edit().putLong("listenerConnectedAt", v).apply()
+        }
+
+    // ---------- Registro de eventos cifrado ----------
 
     fun appendEvent(kind: String, text: String) = synchronized(lock) {
         val arr = runCatching {
@@ -407,6 +459,7 @@ class Store private constructor(context: Context) {
         }.getOrDefault(JSONArray())
 
         val next = JSONArray()
+
         next.put(
             JSONObject()
                 .put("t", System.currentTimeMillis())
@@ -431,6 +484,7 @@ class Store private constructor(context: Context) {
         (0 until arr.length()).mapNotNull { index ->
             runCatching {
                 val item = arr.getJSONObject(index)
+
                 Triple(
                     item.optLong("t"),
                     item.optString("k"),
@@ -448,9 +502,13 @@ class Store private constructor(context: Context) {
     }
 
     companion object {
-        @Volatile private var instance: Store? = null
-        fun get(context: Context): Store = instance ?: synchronized(this) {
-            instance ?: Store(context.applicationContext).also { instance = it }
-        }
+        @Volatile
+        private var instance: Store? = null
+
+        fun get(context: Context): Store =
+            instance ?: synchronized(this) {
+                instance ?: Store(context.applicationContext)
+                    .also { instance = it }
+            }
     }
 }
