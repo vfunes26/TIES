@@ -335,20 +335,23 @@ class Store private constructor(context: Context) {
 
     // ---------- Selección secuencial de proxies ----------
 
-    fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
-        val usable = proxies().filter {
-            it.enabled &&
-                it.user.isBlank() &&
-                it.pass.isBlank()
-        }
 
-        if (usable.isEmpty()) return@synchronized null
-
-        val index = proxyCursor % usable.size
-        proxyCursor = (index + 1) % usable.size
-
-        usable[index]
+fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
+    val usable = proxies().filter {
+        it.enabled &&
+            it.type.lowercase() in setOf("http", "https") &&
+            it.user.isBlank() &&
+            it.pass.isBlank()
     }
+
+    if (usable.isEmpty()) return@synchronized null
+
+    val index = proxyCursor % usable.size
+    proxyCursor = (index + 1) % usable.size
+
+    usable[index]
+}
+
 
     // ---------- Cola de solicitudes ----------
 

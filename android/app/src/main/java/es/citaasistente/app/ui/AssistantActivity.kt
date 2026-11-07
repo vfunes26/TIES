@@ -266,15 +266,16 @@ class AssistantActivity : AppCompatActivity() {
             return
         }
 
+
         val scheme = when (proxy.type.lowercase()) {
             "http" -> "http"
             "https" -> "https"
-            "socks5" -> "socks5"
             else -> {
                 stopForProxyError("Tipo de proxy no compatible: ${proxy.type}")
                 return
             }
         }
+
 
         val config = ProxyConfig.Builder()
             .addProxyRule("$scheme://${proxy.host}:${proxy.port}")

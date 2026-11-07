@@ -1,3 +1,4 @@
+
 package es.citaasistente.app.data
 
 import org.json.JSONObject
@@ -38,7 +39,10 @@ data class ProxyEntry(
             port = o.getInt("port"),
             user = o.optString("user"),
             pass = o.optString("pass"),
-            type = o.optString("type", "http"),
+            type = o.optString("type", "http")
+                .lowercase()
+                .takeIf { it == "http" || it == "https" }
+                ?: "http",
             enabled = o.optBoolean("enabled", true),
             status = o.optInt("status"),
             detail = o.optString("detail"),
@@ -56,16 +60,12 @@ object ProxyParser {
         var type = "http"
 
         val scheme = Regex(
-            "^(https?|socks5h?)://",
+            "^(https?)://",
             RegexOption.IGNORE_CASE
         ).find(s)
 
         if (scheme != null) {
-            type = when (scheme.groupValues[1].lowercase()) {
-                "https" -> "https"
-                "socks5", "socks5h" -> "socks5"
-                else -> "http"
-            }
+            type = scheme.groupValues[1].lowercase()
             s = s.substring(scheme.value.length)
         } else if ("://" in s) {
             return null
