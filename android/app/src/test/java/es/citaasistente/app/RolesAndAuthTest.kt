@@ -10,27 +10,40 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Las pruebas usan los nombres que haya en Roles.kt (MASTER_NAME y USER_NAME),
+ * así siguen pasando aunque los cambies por los tuyos.
+ */
 class RolesAndAuthTest {
+
+    private val master = Roles.MASTER_NAME
+    private val user = Roles.USER_NAME
+
+    @Test
+    fun losDosNombresSonDistintos() {
+        assertNotEquals(Roles.normalize(master), Roles.normalize(user))
+    }
 
     @Test
     fun masterSeReconoceSinImportarMayusculasNiEspacios() {
-        assertEquals(Role.MASTER, Roles.roleOf("master"))
-        assertEquals(Role.MASTER, Roles.roleOf("  MASTER "))
-        assertEquals(Role.MASTER, Roles.roleOf("Master"))
+        assertEquals(Role.MASTER, Roles.roleOf(master))
+        assertEquals(Role.MASTER, Roles.roleOf("  ${master.uppercase()} "))
+        assertEquals(Role.MASTER, Roles.roleOf(master.toCharArray().joinToString(" ")))
     }
 
     @Test
     fun usuarioUiUxAceptaVariasFormasDeEscribirlo() {
-        assertEquals(Role.USER, Roles.roleOf("uiux"))
-        assertEquals(Role.USER, Roles.roleOf("UI/UX"))
-        assertEquals(Role.USER, Roles.roleOf("ui ux"))
-        assertEquals(Role.USER, Roles.roleOf("Ui-Ux"))
+        assertEquals(Role.USER, Roles.roleOf(user))
+        assertEquals(Role.USER, Roles.roleOf(user.uppercase()))
+        assertEquals(Role.USER, Roles.roleOf(user.toCharArray().joinToString("-")))
+        assertEquals(Role.USER, Roles.roleOf(user.toCharArray().joinToString("/")))
     }
 
     @Test
     fun otrosNombresNoEntran() {
-        assertNull(Roles.roleOf("admin"))
-        assertNull(Roles.roleOf("masterx"))
+        assertNull(Roles.roleOf("nombre-inexistente-123"))
+        assertNull(Roles.roleOf(master + "zzq"))
+        assertNull(Roles.roleOf(user + "zzq"))
         assertNull(Roles.roleOf(""))
         assertNull(Roles.roleOf("   "))
     }
