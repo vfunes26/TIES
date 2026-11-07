@@ -155,9 +155,41 @@ class Store private constructor(context: Context) {
         }
     }
 
-    // Estado no sensible: registro de eventos y marcas de tiempo.
-    private val plain: SharedPreferences = context.getSharedPreferences("citaasistente_state", Context.MODE_PRIVATE)
+    // Estado operativo no sensible: marcas de tiempo y diagnósticos generales.
+    private val plain: SharedPreferences = context.getSharedPreferences(
+        "citaasistente_state",
+        Context.MODE_PRIVATE
+    )
     private val lock = Any()
+
+    init {
+        migrateEventsToSecure()
+    }
+
+    /**
+     * Migra el registro histórico desde preferencias sin cifrar.
+     * Primero confirma la escritura cifrada y solo después elimina el original.
+     */
+    private fun migrateEventsToSecure() {
+        val legacyRaw = plain.getString("events", null) ?: return
+
+        if (!secure.contains("events")) {
+            val parsed = runCatching { JSONArray(legacyRaw) }.getOrNull()
+                ?: return
+
+            check(
+                secure.edit()
+                    .putString("events", parsed.toString())
+                    .commit()
+            ) {
+                "No se pudo migrar el registro de eventos al almacenamiento cifrado."
+            }
+        }
+
+        check(plain.edit().remove("events").commit()) {
+            "No se pudo limpiar el registro antiguo de eventos."
+        }
+    }
 
     // ---------- Ajustes ----------
     var settings: Settings
@@ -285,23 +317,51 @@ class Store private constructor(context: Context) {
         get() = plain.getLong("listenerConnectedAt", 0L)
         set(v) { plain.edit().putLong("listenerConnectedAt", v).apply() }
 
-    fun appendEvent(kind: String, text: String) {
-        val arr = runCatching { JSONArray(plain.getString("events", "[]")) }.getOrDefault(JSONArray())
+    fun appendEvent(kind: String, text: String) = synchronized(lock) {
+        val arr = runCatching {
+            JSONArray(secure.getString("events", "[]"))
+        }.getOrDefault(JSONArray())
+
         val next = JSONArray()
-        next.put(JSONObject().put("t", System.currentTimeMillis()).put("k", kind).put("m", text.take(400)))
-        for (i in 0 until minOf(arr.length(), 99)) next.put(arr.get(i))
-        plain.edit().putString("events", next.toString()).apply()
+        next.put(
+            JSONObject()
+                .put("t", System.currentTimeMillis())
+                .put("k", kind)
+                .put("m", text.take(400))
+        )
+
+        for (i in 0 until minOf(arr.length(), 99)) {
+            next.put(arr.get(i))
+        }
+
+        secure.edit()
+            .putString("events", next.toString())
+            .apply()
     }
 
-    fun events(): List<Triple<Long, String, String>> {
-        val arr = runCatching { JSONArray(plain.getString("events", "[]")) }.getOrDefault(JSONArray())
-        return (0 until arr.length()).map {
-            val o = arr.getJSONObject(it)
-            Triple(o.optLong("t"), o.optString("k"), o.optString("m"))
+    fun events(): List<Triple<Long, String, String>> = synchronized(lock) {
+        val arr = runCatching {
+            JSONArray(secure.getString("events", "[]"))
+        }.getOrDefault(JSONArray())
+
+        (0 until arr.length()).mapNotNull { index ->
+            runCatching {
+                val item = arr.getJSONObject(index)
+                Triple(
+                    item.optLong("t"),
+                    item.optString("k"),
+                    item.optString("m")
+                )
+            }.getOrNull()
         }
     }
 
-    fun clearEvents() { plain.edit().remove("events").apply() }
+    fun clearEvents() {
+        synchronized(lock) {
+            secure.edit().remove("events").apply()
+            plain.edit().remove("events").apply()
+        }
+    }
 
     companion object {
         @Volatile private var instance: Store? = null
