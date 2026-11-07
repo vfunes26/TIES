@@ -30,18 +30,21 @@ class ProxiesTest {
     }
 
     @Test
-    fun proxyConEsquemaYCredencialesValido() {
+    fun 
+    @Test
+    fun proxyHttpConEsquemaYCredencialesValido() {
         val proxy = ProxyParser.parseLine(
-            "socks5h://usuario:clave@proxy.example.com:1080"
+            "http://usuario:clave@proxy.example.com:8080"
         )
 
         assertNotNull(proxy)
         assertEquals("proxy.example.com", proxy?.host)
-        assertEquals(1080, proxy?.port)
+        assertEquals(8080, proxy?.port)
         assertEquals("usuario", proxy?.user)
         assertEquals("clave", proxy?.pass)
-        assertEquals("socks5", proxy?.type)
+        assertEquals("http", proxy?.type)
     }
+
 
     @Test
     fun aceptaDosPuntosDentroDeLaClave() {
