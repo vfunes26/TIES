@@ -44,6 +44,7 @@ object BackupManager {
     fun attach(ctx: Context) {
         app = ctx.applicationContext
         Store.changeListener = { schedule() }
+        ActivityReport.attach(ctx)
     }
 
     private fun schedule() {

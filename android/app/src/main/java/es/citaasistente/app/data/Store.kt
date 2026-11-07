@@ -483,7 +483,10 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
 
         if (res.changed) {
             writeRequests(res.list)
-            if (res.expired > 0) ledgerBump(Ledger.EXPIRED, res.expired)
+            if (res.expired > 0) {
+                ledgerBump(Ledger.EXPIRED, res.expired)
+                expiredListener?.invoke(res.expiredList)
+            }
         }
 
         res
@@ -588,6 +591,10 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
         /** Aviso de «cambió algo»: el respaldo automático se programa a partir de aquí. */
         @Volatile
         var changeListener: (() -> Unit)? = null
+
+        /** Aviso de «estas solicitudes acaban de vencer (30 días)»: lo usa ActivityReport para avisar al master. */
+        @Volatile
+        var expiredListener: ((List<Request>) -> Unit)? = null
 
         fun get(context: Context): Store =
             instance ?: synchronized(this) {

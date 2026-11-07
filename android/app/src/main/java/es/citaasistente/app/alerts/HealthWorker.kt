@@ -7,6 +7,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import es.citaasistente.app.data.Store
+import es.citaasistente.app.net.ActivityReport
 import es.citaasistente.app.net.BackupManager
 import java.util.concurrent.TimeUnit
 
@@ -16,6 +17,7 @@ class HealthWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params)
         val store = Store.get(applicationContext)
         store.runMaintenance()
         BackupManager.flushIfDue(applicationContext)
+        ActivityReport.dailyIfDue(applicationContext)
         val bad = HealthChecker.check(applicationContext).filter { !it.ok && it.critical }
         val key = bad.joinToString("|") { it.label }
         if (key != store.lastHealthIssues) {

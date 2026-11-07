@@ -385,7 +385,7 @@ class MainActivity : AppCompatActivity() {
             Status.FALLIDA, Status.CANCELADA -> {
                 b.setPositiveButton("Reactivar e iniciar") { _, _ ->
                     store.updateRequest(r.id) { it.copy(status = Status.PENDIENTE, failReason = "") }
-                    Reporter.log(this, r, "manual", "Reactivada"); startSingle(r.id)
+                    Reporter.log(this, r, "manual", "Reactivada"); es.citaasistente.app.net.ActivityReport.reactivated(this, r); startSingle(r.id)
                 }
                 b.setNeutralButton("Cerrar", null)
             }
@@ -399,7 +399,7 @@ class MainActivity : AppCompatActivity() {
         }
         b.setNegativeButton("Eliminar") { _, _ ->
             AlertDialog.Builder(this).setTitle("¿Eliminar la solicitud?").setMessage("Se borra también su historial.")
-                .setPositiveButton("Eliminar") { _, _ -> store.removeRequest(r.id); refreshAll() }
+                .setPositiveButton("Eliminar") { _, _ -> es.citaasistente.app.net.ActivityReport.deleted(this, r); store.removeRequest(r.id); refreshAll() }
                 .setNegativeButton("No", null).show()
         }
         b.show()
@@ -407,7 +407,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun cancelRequest(id: String) {
         val u = store.updateRequest(id) { it.copy(status = Status.CANCELADA) }
-        Reporter.log(this, u, "manual", "Cancelada por el usuario")
+        Reporter.log(this, u, "manual", "Cancelada por el usuario"); es.citaasistente.app.net.ActivityReport.cancelled(this, u)
         refreshAll()
     }
 

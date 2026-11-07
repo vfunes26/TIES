@@ -420,6 +420,7 @@ class BackupActivity : AppCompatActivity() {
                         createdAt = System.currentTimeMillis()
                     )
                 }
+                es.citaasistente.app.net.ActivityReport.reactivated(this, store.request(id) ?: r)
                 toast("Solicitud reactivada: vuelve a la cola como pendiente.")
                 refresh()
             }
@@ -430,6 +431,7 @@ class BackupActivity : AppCompatActivity() {
                 .setTitle("¿Eliminar del historial?")
                 .setMessage("Se borra definitivamente. Las estadísticas por mes NO cambian.")
                 .setPositiveButton("Eliminar") { _, _ ->
+                    es.citaasistente.app.net.ActivityReport.deleted(this, r)
                     store.removeRequest(id)
                     refresh()
                 }

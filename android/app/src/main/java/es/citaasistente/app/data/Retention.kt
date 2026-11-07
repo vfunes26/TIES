@@ -18,7 +18,8 @@ object Retention {
         val list: List<Request>,
         val expired: Int,
         val purged: Int,
-        val migrated: Int
+        val migrated: Int,
+        val expiredList: List<Request> = emptyList()
     ) {
         val changed: Boolean get() = expired + purged + migrated > 0
     }
@@ -30,6 +31,7 @@ object Retention {
         var expired = 0
         var purged = 0
         var migrated = 0
+        val expiredNow = ArrayList<Request>()
         val out = ArrayList<Request>()
 
         for (r in list) {
@@ -53,6 +55,7 @@ object Retention {
                     updatedAt = now
                 )
                 expired++
+                expiredNow.add(x)
             }
 
             // Historial que cumple 30 días: se borra.
@@ -64,7 +67,7 @@ object Retention {
             out.add(x)
         }
 
-        return Result(out, expired, purged, migrated)
+        return Result(out, expired, purged, migrated, expiredNow)
     }
 
     /** Días que le quedan a un registro del historial antes de borrarse. */
