@@ -168,28 +168,112 @@ class Store private constructor(context: Context) {
 
     /**
      * Migra el registro histórico desde preferencias sin cifrar.
-     * Primero confirma la escritura cifrada y solo después elimina el original.
+     * Conserva los eventos existentes y elimina el original solo
+     * después de confirmar la escritura en el almacenamiento cifrado.
      */
     private fun migrateEventsToSecure() {
         val legacyRaw = plain.getString("events", null) ?: return
 
-        if (!secure.contains("events")) {
-            val parsed = runCatching { JSONArray(legacyRaw) }.getOrNull()
-                ?: return
+        val legacyEvents = runCatching {
+            JSONArray(legacyRaw)
+        }.getOrElse {
+            throw IllegalStateException(
+                "El registro antiguo de eventos no es válido. " +
+                    "No se eliminarán los datos originales.",
+                it
+            )
+        }
 
-            check(
-                secure.edit()
-                    .putString("events", parsed.toString())
-                    .commit()
-            ) {
-                "No se pudo migrar el registro de eventos al almacenamiento cifrado."
+        val secureRaw = secure.getString("events", null)
+
+        val secureEvents = if (secureRaw.isNullOrBlank()) {
+            JSONArray()
+        } else {
+            runCatching {
+                JSONArray(secureRaw)
+            }.getOrElse {
+                throw IllegalStateException(
+                    "El registro cifrado de eventos no es válido. " +
+                        "No se eliminarán los datos originales.",
+                    it
+                )
             }
         }
 
-        check(plain.edit().remove("events").commit()) {
+        val merged = JSONArray()
+        val seen = mutableSetOf<String>()
+
+        fun appendUnique(source: JSONArray) {
+            for (i in 0 until source.length()) {
+                val item = source.optJSONObject(i) ?: continue
+                val key = item.toString()
+
+                if (seen.add(key) && merged.length() < 100) {
+                    merged.put(item)
+                }
+            }
+        }
+
+        // Priorizar el registro cifrado existente.
+        appendUnique(secureEvents)
+
+        // Incorporar eventos históricos sin duplicarlos.
+        appendUnique(legacyEvents)
+
+        check(
+            secure.edit()
+                .putString("events", merged.toString())
+                .commit()
+        ) {
+            "No se pudo migrar el registro de eventos al almacenamiento cifrado."
+        }
+
+        check(
+            plain.edit()
+                .remove("events")
+                .commit()
+        ) {
             "No se pudo limpiar el registro antiguo de eventos."
         }
     }
+            throw IllegalStateException(
+                "El registro cifrado de eventos no es válido. No se eliminarán los datos originales.",
+                it
+            )
+        }
+    }
+
+    // Conservar primero los eventos cifrados más recientes
+    // y después incorporar los eventos históricos.
+    val merged = JSONArray()
+    val seen = mutableSetOf<String>()
+
+    fun appendUnique(source: JSONArray) {
+        for (i in 0 until source.length()) {
+            val item = source.optJSONObject(i) ?: continue
+            val key = item.toString()
+
+            if (seen.add(key) && merged.length() < 100) {
+                merged.put(item)
+            }
+        }
+    }
+
+    appendUnique(secureEvents)
+    appendUnique(legacyEvents)
+
+    check(
+        secure.edit()
+            .putString("events", merged.toString())
+            .commit()
+    ) {
+        "No se pudo migrar el registro de eventos al almacenamiento cifrado."
+    }
+
+    check(plain.edit().remove("events").commit()) {
+        "No se pudo limpiar el registro antiguo de eventos."
+    }
+}
 
     // ---------- Ajustes ----------
     var settings: Settings
