@@ -738,50 +738,185 @@ private fun setupProxyUi() {
             }
     }
 
-    private fun manageProxies() {
-        val proxies = store.proxies()
+private fun manageProxies() {
+    val proxies = store.proxies()
 
-        if (proxies.isEmpty()) {
-            toast("No hay proxies que administrar.")
-            return
-        }
-
-        val labels = proxies.map {
-            "${it.label()} (${if (it.enabled) "Activo" else "Inactivo"})"
-        }.toTypedArray()
-
-        AlertDialog.Builder(this)
-            .setTitle("Administrar proxies")
-            .setItems(labels) { _, index ->
-                val proxy = proxies[index]
-
-                AlertDialog.Builder(this)
-                    .setTitle(proxy.label())
-                    .setMessage(
-                        "Tipo: ${proxy.type}\n" +
-                            "Autenticación: ${if (proxy.user.isNotBlank()) "Sí" else "No"}\n" +
-                            "Estado: ${proxy.detail.ifBlank { "Sin probar" }}"
-                    )
-                    .setPositiveButton(
-                        if (proxy.enabled) "Desactivar" else "Activar"
-                    ) { _, _ ->
-                        store.updateProxy(proxy.id) {
-                            it.copy(enabled = !it.enabled)
-                        }
-                        refreshProxyList()
-                    }
-                    .setNegativeButton("Eliminar") { _, _ ->
-                        store.saveProxies(
-                            store.proxies().filterNot { it.id == proxy.id }
-                        )
-                        refreshProxyList()
-                    }
-                    .setNeutralButton("Cerrar", null)
-                    .show()
-            }
-            .setNegativeButton("Cerrar", null)
-            .show()
+    if (proxies.isEmpty()) {
+        toast("No hay proxies que administrar.")
+        return
     }
+
+    val labels = proxies.map {
+        "${it.label()} (${if (it.enabled) "Activo" else "Inactivo"})"
+    }.toTypedArray()
+
+    AlertDialog.Builder(this)
+        .setTitle("Administrar proxies")
+        .setItems(labels) { _, index ->
+            val proxy = proxies[index]
+
+            val actions = arrayOf(
+                "Editar",
+                if (proxy.enabled) "Desactivar" else "Activar",
+                "Eliminar"
+            )
+
+            AlertDialog.Builder(this)
+                .setTitle(proxy.label())
+                .setItems(actions) { _, action ->
+                    when (action) {
+                        0 -> editProxy(proxy)
+
+                        1 -> {
+                            store.updateProxy(proxy.id) {
+                                it.copy(enabled = !it.enabled)
+                            }
+                            refreshProxyList()
+                        }
+
+                        2 -> {
+                            AlertDialog.Builder(this)
+                                .setTitle("Eliminar proxy")
+                                .setMessage(
+                                    "¿Deseas eliminar ${proxy.label()}?"
+                                )
+                                .setPositiveButton("Eliminar") { _, _ ->
+                                    store.saveProxies(
+                                        store.proxies().filterNot {
+                                            it.id == proxy.id
+                                        }
+                                    )
+                                    refreshProxyList()
+                                    toast("Proxy eliminado.")
+                                }
+                                .setNegativeButton("Cancelar", null)
+                                .show()
+                        }
+                    }
+                }
+                .setNegativeButton("Cerrar", null)
+                .show()
+        }
+        .setNegativeButton("Cerrar", null)
+        .show()
+}
+
+private fun editProxy(proxy: ProxyEntry) {
+    val hostInput = EditText(this).apply {
+        hint = "Host o dirección IP"
+        setSingleLine(true)
+        inputType = InputType.TYPE_TEXT_VARIATION_URI
+        setText(proxy.host)
+    }
+
+    val portInput = EditText(this).apply {
+        hint = "Puerto"
+        setSingleLine(true)
+        inputType = InputType.TYPE_CLASS_NUMBER
+        setText(proxy.port.toString())
+    }
+
+    val userInput = EditText(this).apply {
+        hint = "Usuario (opcional)"
+        setSingleLine(true)
+        inputType = InputType.TYPE_CLASS_TEXT
+        setText(proxy.user)
+    }
+
+    val passInput = EditText(this).apply {
+        hint = "Contraseña (opcional)"
+        setSingleLine(true)
+        inputType =
+            InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_VARIATION_PASSWORD
+        setText(proxy.pass)
+    }
+
+    val container = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        setPadding(padding, 0, padding, 0)
+
+        addView(hostInput)
+        addView(portInput)
+        addView(userInput)
+        addView(passInput)
+    }
+
+    val dialog = AlertDialog.Builder(this)
+        .setTitle("Editar proxy")
+        .setView(container)
+        .setPositiveButton("Guardar", null)
+        .setNegativeButton("Cancelar", null)
+        .create()
+
+    dialog.setOnShowListener {
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            .setOnClickListener {
+                val host = hostInput.text.toString().trim()
+                val portText = portInput.text.toString().trim()
+                val user = userInput.text.toString().trim()
+                val pass = passInput.text.toString()
+
+                if (host.isBlank() || portText.isBlank()) {
+                    toast("Introduce el host y el puerto.")
+                    return@setOnClickListener
+                }
+
+                if (user.isBlank() != pass.isBlank()) {
+                    toast(
+                        "Completa usuario y contraseña, " +
+                            "o deja ambos vacíos."
+                    )
+                    return@setOnClickListener
+                }
+
+                val raw = if (user.isBlank()) {
+                    "$host:$portText"
+                } else {
+                    "$host:$portText:$user:$pass"
+                }
+
+                val parsed = ProxyParser.parseLine(raw)
+
+                if (parsed == null) {
+                    toast("Los datos del proxy no son válidos.")
+                    return@setOnClickListener
+                }
+
+                val duplicate = store.proxies().any {
+                    it.id != proxy.id &&
+                        it.host.equals(parsed.host, ignoreCase = true) &&
+                        it.port == parsed.port &&
+                        it.user == parsed.user
+                }
+
+                if (duplicate) {
+                    toast("Ya existe otro proxy con esos datos.")
+                    return@setOnClickListener
+                }
+
+                store.updateProxy(proxy.id) {
+                    it.copy(
+                        host = parsed.host,
+                        port = parsed.port,
+                        user = parsed.user,
+                        pass = parsed.pass,
+                        status = 0,
+                        detail = "",
+                        testedAt = 0L
+                    )
+                }
+
+                refreshProxyList()
+                toast("Proxy actualizado correctamente.")
+                dialog.dismiss()
+            }
+    }
+
+    dialog.show()
+}
 
     private fun testProxyConnections() {
         val proxies = store.proxies()
