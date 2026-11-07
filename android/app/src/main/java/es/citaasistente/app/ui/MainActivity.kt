@@ -115,6 +115,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!es.citaasistente.app.data.Session.isLoggedIn(this)) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
         setContentView(R.layout.activity_main)
         catalog = Catalog.load(this)
         nats = Nationalities.load(this)
@@ -127,6 +132,7 @@ class MainActivity : AppCompatActivity() {
         setupAlertas()
         setupAjustes()
         setupNav()
+        applyRoleRestrictions()
         syncTelegramIntake(store.settings)
 
         Notifier.ensureChannels(this)
@@ -162,6 +168,27 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toast(s: String) = Toast.makeText(this, s, Toast.LENGTH_LONG).show()
+
+    // ================= Perfiles: master y Usuario UI/UX =================
+    private fun applyRoleRestrictions() {
+        val master = es.citaasistente.app.data.Session.isMaster(this)
+
+        v<TextView>("tvSession").text =
+            "Sesión: ${es.citaasistente.app.data.Session.label(this)}" +
+                if (master) "" else "\nLa configuración la gestiona el master."
+        v<MaterialButton>("btnChangePass").setOnClickListener { AccountUi.changePassword(this) }
+        v<MaterialButton>("btnLogout").setOnClickListener { AccountUi.logout(this) }
+
+        if (master) return
+
+        // Usuario UI/UX: sin Telegram, correo, procesamiento ni proxy. Conserva Estadísticas (respaldo e historial).
+        for (k in listOf("s1", "s2", "s3", "s5")) {
+            v<View>("hdr_$k").visibility = View.GONE
+            v<View>("body_$k").visibility = View.GONE
+        }
+        findViewById<BottomNavigationView>(R.id.bottomNav).menu.findItem(R.id.nav_ajustes)?.title = "Resumen"
+        acc("s4").open()
+    }
 
     private fun problems(list: List<String>) {
         AlertDialog.Builder(this).setTitle("Revisa estos datos")
@@ -560,7 +587,7 @@ class MainActivity : AppCompatActivity() {
         val service = Intent(this, TelegramIntakeService::class.java)
 
         val validChat = Regex("^-?\\d+$").matches(s.telegramChatId.trim())
-        val shouldRun = s.tgIntake && s.telegramReady() && validChat
+        val shouldRun = s.tgIntake && s.telegramReady() && validChat && es.citaasistente.app.data.Session.isMaster(this)
 
         if (shouldRun) {
             ContextCompat.startForegroundService(this, service)

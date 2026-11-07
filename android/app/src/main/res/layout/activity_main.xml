@@ -514,6 +514,14 @@
         <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
             android:id="@+id/btnBackup" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="6dp" android:text="Respaldo, historial y estadísticas por mes"/>
+        <TextView android:id="@+id/tvSession" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="14dp" android:textSize="13sp"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnChangePass" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Cambiar contraseña"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnLogout" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Cerrar sesión"/>
         </LinearLayout>
       </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

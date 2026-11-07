@@ -24,6 +24,7 @@ import es.citaasistente.app.data.Catalog
 import es.citaasistente.app.data.HistoryReport
 import es.citaasistente.app.data.Ledger
 import es.citaasistente.app.data.Request
+import es.citaasistente.app.data.Session
 import es.citaasistente.app.data.Retention
 import es.citaasistente.app.data.Status
 import es.citaasistente.app.data.Store
@@ -37,6 +38,8 @@ import java.util.Locale
 
 /**
  * Respaldo (Drive + Telegram), restauración, estadísticas por mes e historial de 30 días.
+ *  - MASTER: ve y cambia todo (frase, archivo de Drive, Telegram).
+ *  - Usuario UI/UX: restaura el respaldo que le dio el master, respalda (por Telegram), ve estadísticas e historial.
  * La pantalla se arma por código para no depender de archivos de diseño.
  */
 class BackupActivity : AppCompatActivity() {
@@ -96,9 +99,16 @@ class BackupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!Session.isLoggedIn(this)) {
+            finish()
+            return
+        }
+
         store = Store.get(this)
         prefs = BackupPrefs.get(this)
         catalog = Catalog.load(this)
+
+        val master = Session.isMaster(this)
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -106,46 +116,74 @@ class BackupActivity : AppCompatActivity() {
         }
 
         root.addView(text("Respaldo, historial y estadísticas", 20f, bold = true))
-        root.addView(text("Tus solicitudes y citas se guardan cifradas en Drive y Telegram. Si desinstalas o actualizas, las recuperas aquí.", 13f))
+        root.addView(
+            text(
+                if (master) {
+                    "Tus solicitudes y citas se guardan cifradas en Drive y Telegram. Si desinstalas o actualizas, las recuperas aquí."
+                } else {
+                    "Carga aquí el respaldo que te dio el master, consulta tus estadísticas y el historial. La configuración la gestiona el master."
+                },
+                13f
+            )
+        )
 
         tvStatus = text("", 13f)
         root.addView(spaced(tvStatus, 12))
 
-        root.addView(text("1. Frase de respaldo", 15f, bold = true))
-        etPass = EditText(this).apply {
-            hint = "Frase (mínimo ${BackupData.MIN_PASS} caracteres)"
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-        }
-        root.addView(etPass)
-        root.addView(button("Guardar frase") { savePass() })
-        root.addView(text("Anótala en un lugar seguro: sin ella NO se puede abrir el respaldo.", 12f))
-
-        root.addView(spaced(text("2. Dónde se guarda", 15f, bold = true), 14))
-        root.addView(button("Elegir / crear archivo de respaldo en Drive") { createTarget.launch("TIES-respaldo.ties") })
-
-        val cbTelegram = CheckBox(this).apply {
-            text = "Enviar también copia por Telegram (al confirmarse una cita y 1 vez al día)"
-            isChecked = prefs.telegram
-            setOnCheckedChangeListener { _, checked ->
-                prefs.telegram = checked
-                refresh()
+        if (master) {
+            root.addView(text("1. Frase de respaldo", 15f, bold = true))
+            etPass = EditText(this).apply {
+                hint = "Frase (mínimo ${BackupData.MIN_PASS} caracteres)"
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
             }
+            root.addView(etPass)
+            root.addView(button("Guardar frase") { savePass() })
+            root.addView(text("Anótala en un lugar seguro: sin ella NO se puede abrir el respaldo.", 12f))
+
+            root.addView(spaced(text("2. Dónde se guarda", 15f, bold = true), 14))
+            root.addView(button("Elegir / crear archivo de respaldo en Drive") { createTarget.launch("TIES-respaldo.ties") })
+
+            val cbTelegram = CheckBox(this).apply {
+                text = "Enviar también copia por Telegram (al confirmarse una cita y 1 vez al día)"
+                isChecked = prefs.telegram
+                setOnCheckedChangeListener { _, checked ->
+                    prefs.telegram = checked
+                    refresh()
+                }
+            }
+            root.addView(cbTelegram)
         }
-        root.addView(cbTelegram)
 
+        root.addView(spaced(text(if (master) "3. Respaldar" else "1. Respaldar", 15f, bold = true), 14))
         root.addView(button("Respaldar ahora") {
-            runInBackground("Respaldando…") { BackupManager.runNow(this, force = true, sendTelegram = true) }
+            if (!master && store.backupPass.length < BackupData.MIN_PASS) {
+                toast("Primero carga el respaldo del master (así se guarda la frase).")
+            } else {
+                runInBackground("Respaldando…") { BackupManager.runNow(this, force = true, sendTelegram = true) }
+            }
         })
+        if (!master) {
+            root.addView(text("Tus cambios se envían cifrados por Telegram al master.", 12f))
+        }
 
-        root.addView(spaced(text("3. Recuperar después de reinstalar", 15f, bold = true), 14))
+        root.addView(spaced(text(if (master) "4. Recuperar después de reinstalar" else "2. Cargar el respaldo del master", 15f, bold = true), 14))
         root.addView(button("Restaurar desde un archivo…") { openSource.launch(Unit) })
-        root.addView(text("Elige el archivo .ties (en Drive, o el que te llegó por Telegram) y escribe tu frase.", 12f))
+        root.addView(
+            text(
+                if (master) {
+                    "Elige el archivo .ties (en Drive, o el que te llegó por Telegram) y escribe tu frase."
+                } else {
+                    "Elige el archivo .ties que te dio el master y escribe la frase que él te indicó. Se cargan las solicitudes, la configuración y los proxies."
+                },
+                12f
+            )
+        )
 
-        root.addView(spaced(text("4. Estadísticas por mes", 15f, bold = true), 14))
+        root.addView(spaced(text(if (master) "5. Estadísticas por mes" else "3. Estadísticas por mes", 15f, bold = true), 14))
         tvMonths = text("", 13f)
         root.addView(tvMonths)
 
-        root.addView(spaced(text("5. Historial (30 días)", 15f, bold = true), 14))
+        root.addView(spaced(text(if (master) "6. Historial (30 días)" else "4. Historial (30 días)", 15f, bold = true), 14))
         root.addView(text("Con cita, canceladas y vencidas se conservan 30 días. Las pendientes viven 30 días y luego pasan aquí como «Vencida».", 12f))
         btnHistory = button("Ver historial") { showHistory() }
         root.addView(btnHistory)
@@ -175,9 +213,14 @@ class BackupActivity : AppCompatActivity() {
         val all = store.requests()
         val history = all.count { it.archivedAt > 0L }
 
+        val master = Session.isMaster(this)
+
         tvStatus.text = buildString {
-            append("Frase de respaldo: ${if (passOk) "configurada ✔" else "FALTA ✖"}\n")
-            append("Archivo en Drive: $drive\n")
+            append("Sesión: ${Session.label(this@BackupActivity)}\n")
+            if (master) {
+                append("Frase de respaldo: ${if (passOk) "configurada ✔" else "FALTA ✖"}\n")
+                append("Archivo en Drive: $drive\n")
+            }
             append("Copia por Telegram: $tg\n")
             append("Último respaldo: $last\n")
             if (prefs.lastError.isNotBlank()) append("Último error: ${prefs.lastError}\n")
@@ -305,7 +348,7 @@ class BackupActivity : AppCompatActivity() {
                 try {
                     BackupData.restore(store, json)
                     store.backupPass = pass
-                    linkTarget(uri, runBackupAfter = false)
+                    if (Session.isMaster(this)) linkTarget(uri, runBackupAfter = false)
                     store.runMaintenance()
                     refresh()
                     toast("✔ Restaurado. Revisa Ajustes y reinicia la app para aplicar todo.")

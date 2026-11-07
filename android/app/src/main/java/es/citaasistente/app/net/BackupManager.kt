@@ -119,7 +119,7 @@ object BackupManager {
 
         if (tgDue) {
             val stamp = SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date(now))
-            val caption = "💾 Respaldo TIES · ${store.requests().size} solicitudes · " +
+            val caption = es.citaasistente.app.data.Session.tagInline(appCtx) + "💾 Respaldo TIES · ${store.requests().size} solicitudes · " +
                 SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("es", "ES")).format(Date(now))
             try {
                 val r = TelegramFile.sendDocument(s, bytes, "TIES-respaldo-$stamp.ties", caption)

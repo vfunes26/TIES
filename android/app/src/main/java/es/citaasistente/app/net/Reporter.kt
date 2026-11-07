@@ -55,7 +55,7 @@ object Reporter {
                 Ev.INICIO, Ev.HUMANO, Ev.SIN_CITAS, Ev.REGISTRADA, Ev.INFO -> s.tgProcess
                 Ev.CON_CITA, Ev.FALLIDA -> s.tgResults
             }
-            if (allowed) Telegram.send(s, buildTelegram(ev, fresh, catalog, text))
+            if (allowed) Telegram.send(s, es.citaasistente.app.data.Session.tag(ctx) + buildTelegram(ev, fresh, catalog, text))
         }
         if (s.mailReady()) {
             val allowed = when (ev) {
@@ -65,7 +65,7 @@ object Reporter {
             }
             if (allowed) {
                 val stats = catalog?.let { Stats.compute(store.requests(), it).toText() }.orEmpty()
-                Mailer.send(s, "[CitaAsistente] ${ev.title} — ${fresh?.displayName() ?: ""}", buildMail(ev, fresh, catalog, text, stats))
+                Mailer.send(s, "[CitaAsistente] ${ev.title} — ${fresh?.displayName() ?: ""}", es.citaasistente.app.data.Session.tag(ctx) + buildMail(ev, fresh, catalog, text, stats))
             }
         }
     }
