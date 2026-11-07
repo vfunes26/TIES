@@ -74,7 +74,7 @@ object Reporter {
     fun sendSummary(ctx: Context, onDone: (String) -> Unit) {
         val store = Store.get(ctx); val s = store.settings
         val catalog = Catalog.load(ctx)
-        val text = "Resumen de solicitudes (${fmt.format(Date())})\n" + Stats.compute(store.requests(), catalog).toText()
+        val text = "Resumen de solicitudes (${fmt.format(Date())})\n" + Stats.compute(store.requests(), catalog).toText() + "\n\nPOR MES\n" + es.citaasistente.app.data.Ledger.toText(store.ledgerRaw())
         var sent = 0
         if (s.telegramReady()) { Telegram.send(s, "📊 $text"); sent++ }
         if (s.mailReady()) { Mailer.send(s, "[CitaAsistente] Resumen y estadísticas", text); sent++ }

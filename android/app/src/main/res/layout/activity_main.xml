@@ -511,6 +511,9 @@
         <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
             android:id="@+id/btnSendSummary" android:layout_width="match_parent" android:layout_height="wrap_content"
             android:layout_marginTop="6dp" android:text="Enviar resumen por Telegram / correo"/>
+        <com.google.android.material.button.MaterialButton style="@style/Widget.Material3.Button.OutlinedButton"
+            android:id="@+id/btnBackup" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" android:text="Respaldo, historial y estadísticas por mes"/>
         </LinearLayout>
       </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

@@ -6,6 +6,7 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import org.json.JSONArray
 import org.json.JSONObject
+import es.citaasistente.app.net.BackupManager
 
 /**
  * Almacén local. Solicitudes y ajustes se guardan cifrados
@@ -378,6 +379,11 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
     }
 
     private fun writeRequests(list: List<Request>) {
+        writeRequestsRaw(list)
+        changeListener?.invoke()
+    }
+
+    private fun writeRequestsRaw(list: List<Request>) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }
 
@@ -391,6 +397,7 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
 
     fun addRequest(r: Request) = synchronized(lock) {
         writeRequests(readRequests() + r)
+        ledgerBump(Ledger.ADDED)
     }
 
     /** Modifica una solicitud de forma atómica y devuelve la versión actualizada. */
@@ -405,11 +412,81 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
 
         val updated = change(list[i])
             .copy(updatedAt = System.currentTimeMillis())
+            .let { afterChange(list[i], it) }
 
         list[i] = updated
         writeRequests(list)
 
         updated
+    }
+
+    // ---------- Respaldo, historial de 30 días y contadores por mes ----------
+
+    /** Frase con la que se cifra el respaldo. Queda cifrada en el teléfono y NO va dentro del respaldo. */
+    var backupPass: String
+        get() = secure.getString("backupPass", "") ?: ""
+        set(v) {
+            secure.edit().putString("backupPass", v).apply()
+        }
+
+    fun ledgerRaw(): String = secure.getString("ledger", "{}") ?: "{}"
+
+    fun mergeLedger(raw: String) = synchronized(lock) {
+        secure.edit().putString("ledger", Ledger.merge(ledgerRaw(), raw)).apply()
+    }
+
+    private fun ledgerBump(field: String, by: Int = 1) {
+        secure.edit()
+            .putString(
+                "ledger",
+                Ledger.bump(ledgerRaw(), Ledger.monthKey(System.currentTimeMillis()), field, by)
+            )
+            .apply()
+    }
+
+    fun replaceRequests(list: List<Request>) = synchronized(lock) {
+        writeRequests(list)
+    }
+
+    private fun afterChange(old: Request, updated: Request): Request {
+        var r = updated
+        val closed = Retention.isClosed(r)
+
+        if (closed && r.archivedAt == 0L) r = r.copy(archivedAt = System.currentTimeMillis())
+        if (!closed && r.archivedAt != 0L) r = r.copy(archivedAt = 0L)
+
+        if (old.status != r.status) {
+            when (r.status) {
+                Status.CON_CITA -> ledgerBump(Ledger.OK)
+                Status.FALLIDA -> ledgerBump(Ledger.FAILED)
+                Status.CANCELADA ->
+                    ledgerBump(if (Retention.isExpired(r)) Ledger.EXPIRED else Ledger.CANCELLED)
+                else -> {}
+            }
+        }
+
+        return r
+    }
+
+    /** Pasa a vencidas las activas de 30 días, borra el historial de 30 días y arma los contadores la primera vez. */
+    fun runMaintenance(now: Long = System.currentTimeMillis()): Retention.Result = synchronized(lock) {
+        val list = readRequests()
+
+        if (!secure.getBoolean("ledgerSeeded", false)) {
+            secure.edit()
+                .putString("ledger", Ledger.merge(ledgerRaw(), Ledger.seed(list)))
+                .putBoolean("ledgerSeeded", true)
+                .apply()
+        }
+
+        val res = Retention.apply(list, now)
+
+        if (res.changed) {
+            writeRequests(res.list)
+            if (res.expired > 0) ledgerBump(Ledger.EXPIRED, res.expired)
+        }
+
+        res
     }
 
     fun removeRequest(id: String) = synchronized(lock) {
@@ -508,10 +585,14 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
         @Volatile
         private var instance: Store? = null
 
+        /** Aviso de «cambió algo»: el respaldo automático se programa a partir de aquí. */
+        @Volatile
+        var changeListener: (() -> Unit)? = null
+
         fun get(context: Context): Store =
             instance ?: synchronized(this) {
                 instance ?: Store(context.applicationContext)
-                    .also { instance = it }
+                    .also { instance = it; BackupManager.attach(context.applicationContext) }
             }
     }
 }

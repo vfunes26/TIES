@@ -137,7 +137,7 @@ class MainActivity : AppCompatActivity() {
         acc("p1").open()
     }
 
-    override fun onResume() { super.onResume(); refreshAll() }
+    override fun onResume() { super.onResume(); store.runMaintenance(); refreshAll() }
 
     // ================= Navegación y acordeones =================
     private fun setupAccordions() {
@@ -325,7 +325,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshQueue() {
-        val all = store.requests()
+        val all = store.requests().filter { it.archivedAt == 0L }
         adapter.submit(all.sortedWith(compareBy({ order(it.status) }, { it.createdAt })))
         findViewById<View>(R.id.tvEmpty).visibility = if (all.isEmpty()) View.VISIBLE else View.GONE
         findViewById<TextView>(R.id.tvStats).text = Stats.compute(all, catalog).toText().lineSequence().first()
@@ -476,6 +476,7 @@ class MainActivity : AppCompatActivity() {
             Mailer.send(s, "[CitaAsistente] Prueba de correo", "Si lees esto, el envío de informes funciona.") { ok, msg -> toast(if (ok) "Correo: $msg" else msg) }
         }
         v<MaterialButton>("btnSendSummary").setOnClickListener { Reporter.sendSummary(this) { toast(it) } }
+        v<MaterialButton>("btnBackup").setOnClickListener { startActivity(Intent(this, BackupActivity::class.java)) }
     }
 
     private fun sw(name: String) = v<MaterialSwitch>(name)
@@ -1080,6 +1081,6 @@ private fun editProxy(proxy: ProxyEntry) {
         if (!::adapter.isInitialized) return
         refreshQueue()
         refreshAlertas()
-        v<TextView>("tvStatsFull").text = Stats.compute(store.requests(), catalog).toText()
+        v<TextView>("tvStatsFull").text = Stats.compute(store.requests(), catalog).toText() + "\n\nPOR MES\n" + es.citaasistente.app.data.Ledger.toText(store.ledgerRaw())
     }
 }

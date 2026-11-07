@@ -58,5 +58,9 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
+    <activity
+            android:name=".ui.BackupActivity"
+            android:exported="false" />
+
     </application>
 </manifest>
