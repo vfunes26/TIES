@@ -15,6 +15,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -617,11 +618,23 @@ class MainActivity : AppCompatActivity() {
 private fun setupProxyUi() {
     refreshProxyList()
 
+    val protocolSpinner = v<Spinner>("spProxyType")
+    val protocolAdapter = ArrayAdapter(
+        this,
+        android.R.layout.simple_spinner_item,
+        listOf("HTTP", "HTTPS")
+    )
+    protocolAdapter.setDropDownViewResource(
+        android.R.layout.simple_spinner_dropdown_item
+    )
+    protocolSpinner.adapter = protocolAdapter
+
     v<MaterialButton>("btnProxyAdd").setOnClickListener {
         val host = et("etProxyHost").text.toString().trim()
         val portText = et("etProxyPort").text.toString().trim()
         val user = et("etProxyUser").text.toString().trim()
         val pass = et("etProxyPass").text.toString()
+        val protocol = protocolSpinner.selectedItem.toString().lowercase()
 
         if (host.isBlank() || portText.isBlank()) {
             toast("Introduce el host y el puerto.")
@@ -634,9 +647,9 @@ private fun setupProxyUi() {
         }
 
         val raw = if (user.isBlank()) {
-            "$host:$portText"
+            "$protocol://$host:$portText"
         } else {
-            "$host:$portText:$user:$pass"
+            "$protocol://$user:$pass@$host:$portText"
         }
 
         val proxy = ProxyParser.parseLine(raw)
@@ -651,7 +664,8 @@ private fun setupProxyUi() {
         val duplicate = existing.any {
             it.host.equals(proxy.host, ignoreCase = true) &&
                 it.port == proxy.port &&
-                it.user == proxy.user
+                it.user == proxy.user &&
+                it.type.equals(proxy.type, ignoreCase = true)
         }
 
         if (duplicate) {
@@ -672,7 +686,10 @@ private fun setupProxyUi() {
 
     v<MaterialButton>("btnProxyImport").setOnClickListener {
         val raw = et("etProxyImport").text.toString()
-        val (newProxies, invalid) = ProxyParser.parseMany(raw, store.proxies())
+        val (newProxies, invalid) = ProxyParser.parseMany(
+            raw,
+            store.proxies()
+        )
 
         if (newProxies.isEmpty()) {
             toast(
@@ -816,6 +833,20 @@ private fun editProxy(proxy: ProxyEntry) {
         setText(proxy.port.toString())
     }
 
+    val protocolSpinner = Spinner(this).apply {
+        adapter = ArrayAdapter(
+            this@MainActivity,
+            android.R.layout.simple_spinner_item,
+            listOf("HTTP", "HTTPS")
+        ).also {
+            it.setDropDownViewResource(
+                android.R.layout.simple_spinner_dropdown_item
+            )
+        }
+
+        setSelection(if (proxy.type.equals("https", true)) 1 else 0)
+    }
+
     val userInput = EditText(this).apply {
         hint = "Usuario (opcional)"
         setSingleLine(true)
@@ -838,6 +869,7 @@ private fun editProxy(proxy: ProxyEntry) {
         val padding = (20 * resources.displayMetrics.density).toInt()
         setPadding(padding, 0, padding, 0)
 
+        addView(protocolSpinner)
         addView(hostInput)
         addView(portInput)
         addView(userInput)
@@ -858,6 +890,8 @@ private fun editProxy(proxy: ProxyEntry) {
                 val portText = portInput.text.toString().trim()
                 val user = userInput.text.toString().trim()
                 val pass = passInput.text.toString()
+                val protocol =
+                    protocolSpinner.selectedItem.toString().lowercase()
 
                 if (host.isBlank() || portText.isBlank()) {
                     toast("Introduce el host y el puerto.")
@@ -873,9 +907,9 @@ private fun editProxy(proxy: ProxyEntry) {
                 }
 
                 val raw = if (user.isBlank()) {
-                    "$host:$portText"
+                    "$protocol://$host:$portText"
                 } else {
-                    "$host:$portText:$user:$pass"
+                    "$protocol://$user:$pass@$host:$portText"
                 }
 
                 val parsed = ProxyParser.parseLine(raw)
@@ -889,7 +923,8 @@ private fun editProxy(proxy: ProxyEntry) {
                     it.id != proxy.id &&
                         it.host.equals(parsed.host, ignoreCase = true) &&
                         it.port == parsed.port &&
-                        it.user == parsed.user
+                        it.user == parsed.user &&
+                        it.type.equals(parsed.type, ignoreCase = true)
                 }
 
                 if (duplicate) {
@@ -903,6 +938,7 @@ private fun editProxy(proxy: ProxyEntry) {
                         port = parsed.port,
                         user = parsed.user,
                         pass = parsed.pass,
+                        type = parsed.type,
                         status = 0,
                         detail = "",
                         testedAt = 0L

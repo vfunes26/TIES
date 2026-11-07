@@ -132,7 +132,9 @@ object ProxyParser {
     ): Pair<List<ProxyEntry>, Int> {
 
         val seen = HashSet<String>(
-            existing.map { "${it.host}:${it.port}:${it.user}" }
+            existing.map {
+                "${it.type.lowercase()}:${it.host}:${it.port}:${it.user}"
+            }
         )
 
         val result = ArrayList<ProxyEntry>()
@@ -148,7 +150,11 @@ object ProxyParser {
                 continue
             }
 
-            if (seen.add("${proxy.host}:${proxy.port}:${proxy.user}")) {
+            if (
+                seen.add(
+                    "${proxy.type.lowercase()}:${proxy.host}:${proxy.port}:${proxy.user}"
+                )
+            ) {
                 result.add(proxy)
             }
         }

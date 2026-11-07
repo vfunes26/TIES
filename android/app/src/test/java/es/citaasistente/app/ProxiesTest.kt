@@ -2,6 +2,8 @@
 package es.citaasistente.app
 
 import es.citaasistente.app.data.ProxyParser
+import es.citaasistente.app.data.ProxyEntry
+import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -17,6 +19,34 @@ class ProxiesTest {
         assertEquals("http", proxy?.type)
         assertEquals("", proxy?.user)
         assertEquals("", proxy?.pass)
+
+    @Test
+    fun conservaTipoDeProxyAntiguoAlCargarJson() {
+        val proxy = ProxyEntry.fromJson(
+            JSONObject()
+                .put("host", "proxy.example.com")
+                .put("port", 1080)
+                .put("type", "socks5")
+        )
+
+        assertEquals("socks5", proxy.type)
+    }
+
+    @Test
+    fun parseManyPermiteMismoHostConProtocolosDiferentes() {
+        val (proxies, invalid) = ProxyParser.parseMany(
+            """
+                http://proxy.example.com:8080
+                https://proxy.example.com:8080
+            """.trimIndent()
+        )
+
+        assertEquals(2, proxies.size)
+        assertEquals(0, invalid)
+        assertEquals(
+            setOf("http", "https"),
+            proxies.map { it.type }.toSet()
+        )
     }
 
     @Test

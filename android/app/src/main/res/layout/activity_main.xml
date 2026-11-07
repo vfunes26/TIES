@@ -594,6 +594,13 @@
               android:textSize="14sp"
               android:textColor="@color/texto"/>
 
+          <Spinner
+              android:id="@+id/spProxyType"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="8dp"
+              android:spinnerMode="dropdown"/>
+
           <com.google.android.material.textfield.TextInputLayout
               style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
               android:layout_width="match_parent"
@@ -662,7 +669,7 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_marginTop="16dp"
-              android:text="También puedes importar varios proxies. Formatos: host:puerto o host:puerto:usuario:contraseña. Una dirección por línea."
+              android:text="Formatos: host:puerto (HTTP por defecto), host:puerto:usuario:contraseña, http://host:puerto, https://host:puerto y http(s)://usuario:contraseña@host:puerto. Una dirección por línea."
               android:textSize="12sp"
               android:textColor="#6B5B5B"/>
 
