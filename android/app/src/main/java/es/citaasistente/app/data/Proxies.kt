@@ -52,6 +52,40 @@ data class ProxyEntry(
 
 object ProxyParser {
 
+    /**
+     * Arma un proxy desde campos sueltos (pantalla de agregar/editar). No pasa por texto,
+     * así la contraseña puede contener @ : / etc. Solo HTTP o HTTPS.
+     */
+    fun fromFields(
+        type: String,
+        host: String,
+        portText: String,
+        user: String,
+        pass: String
+    ): ProxyEntry? {
+        val t = type.trim().lowercase()
+        if (t != "http" && t != "https") return null
+
+        val h = host.trim()
+        val port = portText.trim().toIntOrNull() ?: return null
+
+        if (h.isBlank() ||
+            h.any { it.isWhitespace() || it == '/' || it == '\\' || it == '@' || it == ':' } ||
+            port !in 1..65535
+        ) return null
+
+        if (user.isBlank() != pass.isBlank()) return null
+
+        return ProxyEntry(
+            host = h,
+            port = port,
+            user = user.trim(),
+            pass = pass,
+            type = t
+        )
+    }
+
+
     fun parseLine(raw: String): ProxyEntry? {
         var s = raw.trim()
         if (s.isEmpty() || s.startsWith("#")) return null

@@ -36,6 +36,10 @@ import androidx.core.content.ContextCompat
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
+import android.webkit.HttpAuthHandler
+import android.webkit.WebResourceError
+import es.citaasistente.app.data.ProxyEntry
+import es.citaasistente.app.net.ProxySession
 
 /**
  * Ejecutor de la cola de solicitudes. Procesa de una en una dentro de la sede electrónica oficial:
@@ -43,7 +47,7 @@ import androidx.webkit.WebViewFeature
  * deja su historial (qué se hizo y cuándo) y avisa por Telegram/correo según tus ajustes.
  *
  * Respeta a la sede: una sola sesión a la vez, separación mínima entre solicitudes, pausas entre
- * lotes y esperas crecientes si la sede limita o rechaza peticiones. No usa proxies ni oculta nada.
+ * lotes y esperas crecientes si la sede limita o rechaza peticiones. Si activas proxies, usa uno solo (HTTP/HTTPS con usuario y contraseña) durante toda la cola.
  */
 class AssistantActivity : AppCompatActivity() {
 
@@ -104,8 +108,38 @@ class AssistantActivity : AppCompatActivity() {
                 Toast.makeText(this@AssistantActivity, "Enlace externo bloqueado", Toast.LENGTH_SHORT).show()
                 return true
             }
+// --- Proxy: el WebView pide usuario y contraseña del proxy (HTTP 407) ---
+            override fun onReceivedHttpAuthRequest(view: WebView, auth: HttpAuthHandler, host: String?, realm: String?) {
+                val px = proxyInUse
+                val h = host.orEmpty().substringBefore(":")
+                // Solo se entrega la clave al PROXY, nunca a la web de la sede.
+                val isProxy = px != null && (h.equals(px.host, ignoreCase = true) || !isAllowed("https", h))
+                if (px == null || !isProxy || px.user.isBlank()) {
+                    auth.cancel()
+                    return
+                }
+                if (++proxyAuthTries > 2) {
+                    auth.cancel()
+                    proxyFailed("El proxy rechazó el usuario o la contraseña")
+                    return
+                }
+                auth.proceed(px.user, px.pass)
+            }
+
+            // --- Proxy: si la página principal no carga con el proxy, se prueba el siguiente ---
+            override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
+                if (!request.isForMainFrame || proxyInUse == null || currentId == null || finished) return
+                pageError = true
+                proxyFailed("${error.description} (código ${error.errorCode})")
+            }
+
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) { if (currentId != null) tvDetail.text = "Cargando…" }
             override fun onPageFinished(view: WebView, url: String?) {
+                cancelLoadWatchdog()
+                proxyAuthTries = 0
+                if (proxyBusy) return
+                if (pageError) { pageError = false; return }
+                if (proxyInUse != null) { proxyRotations = 0; proxyTried.clear() }
                 // Los datos personales solo se entregan a páginas de la sede oficial.
                 val uri = android.net.Uri.parse(url ?: return)
                 if (currentId == null || paused || finished || !isAllowed(uri.scheme, uri.host)) return
@@ -239,7 +273,145 @@ class AssistantActivity : AppCompatActivity() {
         applyProxyForRequest()
     }
 
+    // =====================================================================
+    //  PROXY HTTP/HTTPS (IP + PUERTO + USUARIO + CONTRASEÑA)
+    //  Se usa UN solo proxy durante toda la cola y solo cambia si falla.
+    //  Al terminar la cola se libera y la app vuelve a la conexión normal.
+    // =====================================================================
+    private var proxyInUse: ProxyEntry? = null
+    private var proxyBusy = false
+    private var proxyAuthTries = 0
+    private var proxyRotations = 0
+    private var pageError = false
+    private val proxyTried = HashSet<String>()
+    private var loadWatchdog: Runnable? = null
+
     private fun applyProxyForRequest() {
+        if (!store.settings.proxyEnabled) {
+            endProxySession()
+            clearProxyOverride {
+                if (!isFinishing && currentId != null) loadStart()
+            }
+            return
+        }
+
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
+            proxyAbort("Tu WebView no admite proxies. Actualiza «Android System WebView» en Google Play.")
+            return
+        }
+
+        if (proxyInUse != null) {
+            loadStart()
+            return
+        }
+
+        chooseProxy()
+    }
+
+    /** Prueba los proxies (usuario, clave e IP) y aplica el primero que funcione. */
+    private fun chooseProxy() {
+        if (proxyBusy) return
+        proxyBusy = true
+        setStatus("Comprobando el proxy…", "Se verifica usuario, contraseña e IP antes de abrir la sede.")
+
+        ProxySession.acquire(this, HashSet(proxyTried)) { out ->
+            proxyBusy = false
+            if (isFinishing || isDestroyed || finished || currentId == null) return@acquire
+
+            val px = out.entry
+            if (px == null) {
+                proxyAbort(out.report)
+                return@acquire
+            }
+
+            proxyInUse = px
+            proxyAuthTries = 0
+            ProxySession.begin(px)
+
+            val r = out.result
+            val ipInfo = if (r != null) "IP ${r.ip} · ${r.country.ifBlank { "país ?" }}" else ""
+            val req = currentId?.let { store.request(it) }
+            Reporter.log(this, req, "proxy", "Proxy activo ${px.label()} ($ipInfo)")
+            Reporter.notify(
+                this, Ev.INFO, req,
+                "🌐 Proxy activo: ${px.label()} · $ipInfo" +
+                    if (out.report.isNotBlank()) "\n⚠️ ${out.report}" else ""
+            )
+
+            try {
+                val cfg = ProxyConfig.Builder()
+                    .addProxyRule("http://${px.host}:${px.port}")
+                    .build()
+                ProxyController.getInstance().setProxyOverride(cfg, ContextCompat.getMainExecutor(this)) {
+                    if (!isFinishing && currentId != null) loadStart()
+                }
+            } catch (e: Exception) {
+                proxyAbort("No se pudo aplicar el proxy: ${e.message ?: e.javaClass.simpleName}")
+            }
+        }
+    }
+
+    /** El proxy en uso falló (conexión, tiempo o clave): se descarta y se prueba el siguiente. */
+    private fun proxyFailed(reason: String) {
+        val px = proxyInUse ?: return
+        if (finished || currentId == null) return
+
+        cancelLoadWatchdog()
+        web.stopLoading()
+        proxyTried.add(px.id)
+        store.updateProxy(px.id) {
+            it.copy(status = 2, detail = reason.take(120), testedAt = System.currentTimeMillis())
+        }
+        Reporter.log(this, currentId?.let { store.request(it) }, "proxy", "Proxy ${px.label()} falló: $reason")
+
+        proxyInUse = null
+        ProxySession.end()
+        proxyRotations++
+
+        if (proxyRotations > 5) {
+            proxyAbort("Se agotaron los proxies disponibles. Último error: $reason")
+            return
+        }
+
+        setStatus("Cambiando de proxy…", reason.take(100))
+        chooseProxy()
+    }
+
+    /** No se puede continuar con proxy: avisa por Telegram y detiene la cola (la solicitud vuelve a pendiente). */
+    private fun proxyAbort(reason: String) {
+        Reporter.notify(this, Ev.INFO, currentId?.let { store.request(it) }, "🌐 $reason")
+        stopForProxyError(reason)
+    }
+
+    private fun armLoadWatchdog() {
+        cancelLoadWatchdog()
+        if (proxyInUse == null) return
+        val r = Runnable {
+            loadWatchdog = null
+            proxyFailed("Tiempo de espera agotado abriendo la sede")
+        }
+        loadWatchdog = r
+        handler.postDelayed(r, 60_000L)
+    }
+
+    private fun cancelLoadWatchdog() {
+        loadWatchdog?.let { handler.removeCallbacks(it) }
+        loadWatchdog = null
+    }
+
+    /** Fin de la cola: se libera el proxy y la app vuelve a la conexión normal (datos o WiFi). */
+    private fun endProxySession() {
+        cancelLoadWatchdog()
+        val px = proxyInUse ?: return
+        proxyInUse = null
+        proxyTried.clear()
+        proxyRotations = 0
+        ProxySession.end()
+        Reporter.log(this, null, "proxy", "Proxy ${px.label()} liberado: vuelve la conexión normal")
+    }
+
+    @Suppress("unused")
+    private fun applyProxyForRequestLegacy() {
         val settings = store.settings
 
         if (!settings.proxyEnabled) {
@@ -333,7 +505,7 @@ class AssistantActivity : AppCompatActivity() {
         cancelTimer()
         lastKey = ""; repeats = 0
         val cm = CookieManager.getInstance()
-        cm.removeAllCookies { web.loadUrl(START_URL) } // sesión limpia en cada intento
+        cm.removeAllCookies { pageError = false; proxyAuthTries = 0; web.loadUrl(START_URL); armLoadWatchdog() } // sesión limpia en cada intento
         cm.flush()
         val r = currentId?.let { store.request(it) }
         setStatus("Abriendo la sede electrónica…", r?.displayName().orEmpty())
@@ -465,6 +637,7 @@ class AssistantActivity : AppCompatActivity() {
         finished = true
         cancelTimer(); cancelHuman()
         clearProxyOverride()
+        endProxySession()
         window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setStatus(title, detail)
         updateQueueLine()
@@ -580,6 +753,7 @@ class AssistantActivity : AppCompatActivity() {
         }
         active = false
         clearProxyOverride()
+        endProxySession()
         if (::web.isInitialized) { web.removeJavascriptInterface("CitaBridge"); web.destroy() }
         super.onDestroy()
     }

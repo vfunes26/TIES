@@ -46,6 +46,8 @@ import es.citaasistente.app.data.Status
 import es.citaasistente.app.data.Store
 import es.citaasistente.app.data.ProxyEntry
 import es.citaasistente.app.data.ProxyParser
+import es.citaasistente.app.data.ProxyRules
+import es.citaasistente.app.net.ProxyTester
 import es.citaasistente.app.net.Ev
 import com.vfunes26.ties.model.AlertModeManager
 import com.vfunes26.ties.model.RequestSelector
@@ -652,7 +654,7 @@ private fun setupProxyUi() {
             "$protocol://$user:$pass@$host:$portText"
         }
 
-        val proxy = ProxyParser.parseLine(raw)
+        val proxy = ProxyParser.fromFields(protocol, host, portText, user, pass)
 
         if (proxy == null) {
             toast("Datos inválidos. Revisa el host, puerto y credenciales.")
@@ -670,6 +672,11 @@ private fun setupProxyUi() {
 
         if (duplicate) {
             toast("Este proxy ya está registrado.")
+            return@setOnClickListener
+        }
+
+        if (existing.size >= ProxyRules.MAX_PROXIES) {
+            toast("Máximo ${ProxyRules.MAX_PROXIES} proxies. Elimina alguno para agregar otro.")
             return@setOnClickListener
         }
 
@@ -699,11 +706,22 @@ private fun setupProxyUi() {
             return@setOnClickListener
         }
 
-        store.saveProxies(store.proxies() + newProxies)
+        val room = ProxyRules.room(store.proxies().size)
+
+        if (room == 0) {
+            toast("Ya tienes ${ProxyRules.MAX_PROXIES} proxies (máximo). Elimina alguno para importar más.")
+            return@setOnClickListener
+        }
+
+        val toAdd = newProxies.take(room)
+        store.saveProxies(store.proxies() + toAdd)
         et("etProxyImport").setText("")
         refreshProxyList()
 
-        toast("${newProxies.size} proxy(s) añadidos. Líneas inválidas: $invalid")
+        toast(
+            "${toAdd.size} proxy(s) añadidos. Líneas inválidas: $invalid" +
+                if (newProxies.size > toAdd.size) ". Se omitieron ${newProxies.size - toAdd.size} por el límite de ${ProxyRules.MAX_PROXIES}." else ""
+        )
     }
 
     v<MaterialButton>("btnProxyManage").setOnClickListener {
@@ -736,7 +754,8 @@ private fun setupProxyUi() {
             } else {
                 proxies.joinToString("\n") { proxy ->
                     val state = when (proxy.status) {
-                        1 -> "TCP accesible"
+                        1 -> "Verificado ✔"
+                        3 -> "Funciona, pero la IP NO es de España ⚠"
                         2 -> "Error de conexión"
                         else -> "Sin probar"
                     }
@@ -750,7 +769,8 @@ private fun setupProxyUi() {
                     }
 
                     "${proxy.label()} · ${proxy.type.uppercase()} · " +
-                        "${if (proxy.enabled) "Activo" else "Desactivado"} · $state$auth"
+                        "${if (proxy.enabled) "Activo" else "Desactivado"} · $state$auth" +
+                        (if (proxy.detail.isNotBlank()) "\n     ↳ ${proxy.detail}" else "")
                 }
             }
     }
@@ -912,7 +932,7 @@ private fun editProxy(proxy: ProxyEntry) {
                     "$protocol://$user:$pass@$host:$portText"
                 }
 
-                val parsed = ProxyParser.parseLine(raw)
+                val parsed = ProxyParser.fromFields(protocol, host, portText, user, pass)
 
                 if (parsed == null) {
                     toast("Los datos del proxy no son válidos.")
@@ -955,6 +975,56 @@ private fun editProxy(proxy: ProxyEntry) {
 }
 
     private fun testProxyConnections() {
+        val proxies = store.proxies()
+
+        if (proxies.isEmpty()) {
+            toast("Agrega primero algún proxy.")
+            return
+        }
+
+        val button = v<MaterialButton>("btnProxyTest")
+        button.isEnabled = false
+        button.text = "Probando proxies…"
+
+        Thread {
+            val pool = java.util.concurrent.Executors.newFixedThreadPool(5)
+            val jobs = proxies.map { proxy ->
+                proxy to pool.submit(java.util.concurrent.Callable { ProxyTester.test(proxy, 10_000) })
+            }
+
+            var ok = 0
+            var spain = 0
+
+            jobs.forEach { (proxy, job) ->
+                val r = runCatching { job.get() }.getOrElse {
+                    ProxyTester.Result(false, detail = "Error interno: ${it.javaClass.simpleName}")
+                }
+
+                if (r.ok) ok++
+                if (r.ok && r.isSpain) spain++
+
+                store.updateProxy(proxy.id) {
+                    it.copy(
+                        status = r.status,
+                        detail = r.summary(),
+                        testedAt = System.currentTimeMillis()
+                    )
+                }
+            }
+
+            pool.shutdown()
+
+            runOnUiThread {
+                button.isEnabled = true
+                button.text = "Probar conexiones"
+                refreshProxyList()
+                toast("Funcionan $ok de ${proxies.size} · con IP de España: $spain")
+            }
+        }.start()
+    }
+
+    @Suppress("unused")
+    private fun testProxyConnectionsLegacy() {
         val proxies = store.proxies()
 
         if (proxies.isEmpty()) {

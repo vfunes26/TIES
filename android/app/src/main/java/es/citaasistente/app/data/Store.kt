@@ -340,8 +340,8 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
     val usable = proxies().filter {
         it.enabled &&
             it.type.lowercase() in setOf("http", "https") &&
-            it.user.isBlank() &&
-            it.pass.isBlank()
+            it.port in 1..65535 &&
+            it.host.isNotBlank()
     }
 
     if (usable.isEmpty()) return@synchronized null
