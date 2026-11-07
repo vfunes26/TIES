@@ -407,7 +407,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun cancelRequest(id: String) {
         val u = store.updateRequest(id) { it.copy(status = Status.CANCELADA) }
-        Reporter.log(this, u, "manual", "Cancelada por el usuario"); es.citaasistente.app.net.ActivityReport.cancelled(this, u)
+        Reporter.log(this, u, "manual", "Cancelada por el usuario"); u?.let { es.citaasistente.app.net.ActivityReport.cancelled(this, it) }
         refreshAll()
     }
 
