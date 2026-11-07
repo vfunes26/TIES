@@ -43,6 +43,7 @@ import es.citaasistente.app.data.Settings
 import es.citaasistente.app.data.Stats
 import es.citaasistente.app.data.Status
 import es.citaasistente.app.data.Store
+import es.citaasistente.app.data.ProxyEntry
 import es.citaasistente.app.data.ProxyParser
 import es.citaasistente.app.net.Ev
 import com.vfunes26.ties.model.AlertModeManager
@@ -613,48 +614,101 @@ class MainActivity : AppCompatActivity() {
         refreshAll()
         toast("Guardado")
     }
-    private fun setupProxyUi() {
+private fun setupProxyUi() {
+    refreshProxyList()
+
+    v<MaterialButton>("btnProxyAdd").setOnClickListener {
+        val host = et("etProxyHost").text.toString().trim()
+        val portText = et("etProxyPort").text.toString().trim()
+        val user = et("etProxyUser").text.toString().trim()
+        val pass = et("etProxyPass").text.toString()
+
+        if (host.isBlank() || portText.isBlank()) {
+            toast("Introduce el host y el puerto.")
+            return@setOnClickListener
+        }
+
+        if (user.isBlank() != pass.isBlank()) {
+            toast("Debes completar usuario y contraseña, o dejar ambos vacíos.")
+            return@setOnClickListener
+        }
+
+        val raw = if (user.isBlank()) {
+            "$host:$portText"
+        } else {
+            "$host:$portText:$user:$pass"
+        }
+
+        val proxy = ProxyParser.parseLine(raw)
+
+        if (proxy == null) {
+            toast("Datos inválidos. Revisa el host, puerto y credenciales.")
+            return@setOnClickListener
+        }
+
+        val existing = store.proxies()
+
+        val duplicate = existing.any {
+            it.host.equals(proxy.host, ignoreCase = true) &&
+                it.port == proxy.port &&
+                it.user == proxy.user
+        }
+
+        if (duplicate) {
+            toast("Este proxy ya está registrado.")
+            return@setOnClickListener
+        }
+
+        store.saveProxies(existing + proxy)
+
+        et("etProxyHost").setText("")
+        et("etProxyPort").setText("")
+        et("etProxyUser").setText("")
+        et("etProxyPass").setText("")
+
+        refreshProxyList()
+        toast("Proxy añadido correctamente.")
+    }
+
+    v<MaterialButton>("btnProxyImport").setOnClickListener {
+        val raw = et("etProxyImport").text.toString()
+        val (newProxies, invalid) = ProxyParser.parseMany(raw, store.proxies())
+
+        if (newProxies.isEmpty()) {
+            toast(
+                if (invalid > 0) "No se encontraron proxies válidos."
+                else "No hay proxies nuevos para importar."
+            )
+            return@setOnClickListener
+        }
+
+        store.saveProxies(store.proxies() + newProxies)
+        et("etProxyImport").setText("")
         refreshProxyList()
 
-        v<MaterialButton>("btnProxyImport").setOnClickListener {
-            val raw = et("etProxyImport").text.toString()
-            val (newProxies, invalid) = ProxyParser.parseMany(raw, store.proxies())
-
-            if (newProxies.isEmpty()) {
-                toast(
-                    if (invalid > 0) "No se encontraron proxies válidos."
-                    else "No hay proxies nuevos para importar."
-                )
-                return@setOnClickListener
-            }
-
-            store.saveProxies(store.proxies() + newProxies)
-            et("etProxyImport").setText("")
-            refreshProxyList()
-
-            toast("${newProxies.size} proxy(s) añadidos. Líneas inválidas: $invalid")
-        }
-
-        v<MaterialButton>("btnProxyManage").setOnClickListener {
-            manageProxies()
-        }
-
-        v<MaterialButton>("btnProxyTest").setOnClickListener {
-            testProxyConnections()
-        }
-
-        v<MaterialButton>("btnSaveProxy").setOnClickListener {
-            store.settings = store.settings.copy(
-                proxyEnabled = sw("swProxyEnabled").isChecked
-            )
-
-            acc("s5").done(true)
-            acc("s5").close()
-            refreshProxyList()
-            refreshAll()
-            toast("Configuración de proxies guardada.")
-        }
+        toast("${newProxies.size} proxy(s) añadidos. Líneas inválidas: $invalid")
     }
+
+    v<MaterialButton>("btnProxyManage").setOnClickListener {
+        manageProxies()
+    }
+
+    v<MaterialButton>("btnProxyTest").setOnClickListener {
+        testProxyConnections()
+    }
+
+    v<MaterialButton>("btnSaveProxy").setOnClickListener {
+        store.settings = store.settings.copy(
+            proxyEnabled = sw("swProxyEnabled").isChecked
+        )
+
+        acc("s5").done(true)
+        acc("s5").close()
+        refreshProxyList()
+        refreshAll()
+        toast("Configuración de proxies guardada.")
+    }
+}
 
     private fun refreshProxyList() {
         val proxies = store.proxies()

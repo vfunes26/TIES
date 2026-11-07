@@ -589,7 +589,80 @@
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_marginTop="8dp"
-              android:text="Formatos: host:puerto, usuario:contraseña@host:puerto o tipo://host:puerto. Una dirección por línea."
+              android:text="Agregar proxy individual"
+              android:textStyle="bold"
+              android:textSize="14sp"
+              android:textColor="@color/texto"/>
+
+          <com.google.android.material.textfield.TextInputLayout
+              style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="8dp"
+              android:hint="Host o dirección IP">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProxyHost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri"/>
+          </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.textfield.TextInputLayout
+              style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="6dp"
+              android:hint="Puerto">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProxyPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"/>
+          </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.textfield.TextInputLayout
+              style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="6dp"
+              android:hint="Usuario (opcional)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProxyUser"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"/>
+          </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.textfield.TextInputLayout
+              style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="6dp"
+              android:hint="Contraseña (opcional)">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etProxyPass"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"/>
+          </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.button.MaterialButton
+              style="@style/Widget.Material3.Button"
+              android:id="@+id/btnProxyAdd"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="6dp"
+              android:text="Agregar proxy"/>
+
+          <TextView
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:layout_marginTop="16dp"
+              android:text="También puedes importar varios proxies. Formatos: host:puerto o host:puerto:usuario:contraseña. Una dirección por línea."
               android:textSize="12sp"
               android:textColor="#6B5B5B"/>
 
