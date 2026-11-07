@@ -19,6 +19,7 @@ class ProxiesTest {
         assertEquals("http", proxy?.type)
         assertEquals("", proxy?.user)
         assertEquals("", proxy?.pass)
+    }
 
     @Test
     fun conservaTipoDeProxyAntiguoAlCargarJson() {
