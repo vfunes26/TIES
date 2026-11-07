@@ -1,3 +1,4 @@
+
 package es.citaasistente.app
 
 import es.citaasistente.app.data.ProxyParser
@@ -30,8 +31,6 @@ class ProxiesTest {
     }
 
     @Test
-    fun 
-    @Test
     fun proxyHttpConEsquemaYCredencialesValido() {
         val proxy = ProxyParser.parseLine(
             "http://usuario:clave@proxy.example.com:8080"
@@ -45,6 +44,20 @@ class ProxiesTest {
         assertEquals("http", proxy?.type)
     }
 
+    @Test
+    fun rechazaProxiesSocks5() {
+        assertNull(
+            ProxyParser.parseLine(
+                "socks5://usuario:clave@proxy.example.com:1080"
+            )
+        )
+
+        assertNull(
+            ProxyParser.parseLine(
+                "socks5h://usuario:clave@proxy.example.com:1080"
+            )
+        )
+    }
 
     @Test
     fun aceptaDosPuntosDentroDeLaClave() {
