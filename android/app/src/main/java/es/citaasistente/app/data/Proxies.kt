@@ -40,9 +40,8 @@ data class ProxyEntry(
             user = o.optString("user"),
             pass = o.optString("pass"),
             type = o.optString("type", "http")
-                .lowercase()
-                .takeIf { it == "http" || it == "https" }
-                ?: "http",
+                .trim()
+                .lowercase(),
             enabled = o.optBoolean("enabled", true),
             status = o.optInt("status"),
             detail = o.optString("detail"),
