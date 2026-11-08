@@ -53,7 +53,7 @@ class RequestAdapter(
         val p = r.profile
         val prov = catalog.province(p.provinceCode)
         h.name.text = "${r.displayName()} · ${Nif.mask(p.docNumber)}"
-        h.where.text = "${prov?.name ?: "?"} · ${prov?.procedure(p.procedureId)?.name ?: p.procedureId}"
+        h.where.text = "${prov?.name ?: (if (p.provinceCode.isBlank()) "Cualquier provincia" else "?")} · ${prov?.procedure(p.procedureId)?.name ?: p.procedureId}"
         h.meta.text = buildString {
             append("Intentos: ${r.attempts} · desde ${p.minDate}")
             if (r.slot.isNotBlank()) append(" · cita: ${r.slot}")

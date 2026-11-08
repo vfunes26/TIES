@@ -48,6 +48,7 @@ object Reporter {
         val s = store.settings
         val catalog = runCatching { Catalog.load(ctx) }.getOrNull()
         val fresh = req?.let { store.request(it.id) } ?: req
+        if (fresh != null) ClientNotify.onEvent(ctx, ev, fresh, text)
 
         if (s.telegramReady() && !skipTelegram) {
             val allowed = when (ev) {
@@ -83,7 +84,7 @@ object Reporter {
 
     private fun where(req: Request, catalog: Catalog?): String {
         val prov = catalog?.province(req.profile.provinceCode)
-        return "${prov?.name ?: req.profile.provinceCode} · ${prov?.procedure(req.profile.procedureId)?.name ?: req.profile.procedureId}"
+        return "${prov?.name ?: req.profile.provinceCode.ifBlank { "Cualquier provincia" }} · ${prov?.procedure(req.profile.procedureId)?.name ?: req.profile.procedureId}"
     }
 
     private fun buildTelegram(ev: Ev, req: Request?, catalog: Catalog?, text: String) = buildString {

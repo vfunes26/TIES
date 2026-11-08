@@ -429,6 +429,26 @@ fun nextUsableProxy(): ProxyEntry? = synchronized(lock) {
             secure.edit().putString("backupPass", v).apply()
         }
 
+    /** Clientes de Telegram autorizados (JSON). Los administra el master con /autorizar y /bloquear. */
+    fun clientsRaw(): String = secure.getString("clients", "[]") ?: "[]"
+
+    fun setClientsRaw(v: String) {
+        secure.edit().putString("clients", v).apply()
+    }
+
+    /** Fallos seguidos de un proxy: suma si falló, reinicia si funcionó. Devuelve el contador actual. */
+    fun proxyRecord(id: String, ok: Boolean): Int = synchronized(lock) {
+        val o = try {
+            JSONObject(secure.getString("proxyFails", "{}") ?: "{}")
+        } catch (e: Exception) {
+            JSONObject()
+        }
+        val n = if (ok) 0 else o.optInt(id, 0) + 1
+        if (n == 0) o.remove(id) else o.put(id, n)
+        secure.edit().putString("proxyFails", o.toString()).apply()
+        n
+    }
+
     fun ledgerRaw(): String = secure.getString("ledger", "{}") ?: "{}"
 
     fun mergeLedger(raw: String) = synchronized(lock) {

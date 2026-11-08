@@ -204,6 +204,7 @@ class LoginActivity : AppCompatActivity() {
 
                 when (r.verdict) {
                     GoogleAuth.Verdict.OK -> {
+                        es.citaasistente.app.net.AccessGuard.reportNewAccess(this, email, key)
                         AccessPrefs.get(this).save(email, key, System.currentTimeMillis())
                         Session.login(this, Role.USER)
                         goMain()

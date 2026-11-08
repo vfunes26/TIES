@@ -8,6 +8,7 @@ import es.citaasistente.app.data.ActivityStats
 import es.citaasistente.app.data.BackupPrefs
 import es.citaasistente.app.data.Catalog
 import es.citaasistente.app.data.Nif
+import es.citaasistente.app.data.ProxyRules
 import es.citaasistente.app.data.Request
 import es.citaasistente.app.data.Role
 import es.citaasistente.app.data.Session
@@ -75,14 +76,18 @@ object ActivityReport {
 
     // ------------------------------------------------------------------ avisos de eventos
 
-    fun cancelled(ctx: Context, r: Request) =
+    fun cancelled(ctx: Context, r: Request) {
         send(ctx, "🚫", "SOLICITUD CANCELADA", r, "", mail = false)
+        ClientNotify.status(ctx, r, "🚫 Tu solicitud fue cancelada.")
+    }
 
     fun reactivated(ctx: Context, r: Request) =
         send(ctx, "♻️", "SOLICITUD REACTIVADA", r, "", mail = false)
 
-    fun expired(ctx: Context, r: Request) =
+    fun expired(ctx: Context, r: Request) {
         send(ctx, "⌛", "SOLICITUD VENCIDA", r, "Pasaron 30 días sin procesarse; pasó al historial.", mail = false)
+        ClientNotify.status(ctx, r, "⌛ Tu solicitud venció: pasaron 30 días sin conseguir cita.")
+    }
 
     fun deleted(ctx: Context, r: Request) {
         val app = ctx.applicationContext
@@ -101,7 +106,7 @@ object ActivityReport {
 
     private fun where(r: Request, catalog: Catalog?): String {
         val prov = catalog?.province(r.profile.provinceCode)
-        return "${prov?.name ?: r.profile.provinceCode} · ${prov?.procedure(r.profile.procedureId)?.name ?: r.profile.procedureId}"
+        return "${prov?.name ?: r.profile.provinceCode.ifBlank { "Cualquier provincia" }} · ${prov?.procedure(r.profile.procedureId)?.name ?: r.profile.procedureId}"
     }
 
     private fun send(ctx: Context, icon: String, title: String, r: Request, extra: String, mail: Boolean) {
@@ -213,17 +218,19 @@ object ActivityReport {
 
         val proxies = store.proxies()
         val verified = proxies.count { it.status == 1 || it.status == 3 }
+        val active = proxies.count { ProxyRules.isUsable(it) }
+        val disabled = proxies.count { !it.enabled }
 
         return buildString {
             append("📊 INFORME DE OPERACIÓN\n")
-            append("${who(app)} · ${fmt.format(Date(now))}\n")
+            append("${who(app)} · v${es.citaasistente.app.BuildConfig.VERSION_NAME} · ${fmt.format(Date(now))}\n")
             append(if (problems.isEmpty()) "Estado: ✅ operando con normalidad\n" else "Estado: ⚠️ requiere atención\n")
             append("\nDesde el último informe\n")
             append("• Agregadas: ${d.added} · Con cita: ${d.ok} · Canceladas: ${d.cancelled}\n")
             append("• Vencidas: ${d.expired} · Fallidas: ${d.failed} · Eliminadas: $deleted\n")
             append("\nActivas ahora: ${d.active} (pendientes ${d.pending} · en proceso ${d.processing} · esperando captcha/SMS ${d.waitingHuman} · fallidas ${d.failedActive})\n")
             append("Última actividad: ${if (d.lastActivity > 0L) fmt.format(Date(d.lastActivity)) else "ninguna"}\n")
-            append("Proxy: ${if (s.proxyEnabled) "activado · ${proxies.size} guardados · $verified verificados" else "desactivado"}\n")
+            append("Proxy: ${if (s.proxyEnabled) "activado · $active activos de ${proxies.size} · $verified verificados · $disabled desactivados" else "desactivado"}\n")
             append("Último respaldo: ${if (bp.lastOkAt > 0L) fmt.format(Date(bp.lastOkAt)) else "nunca"}")
             if (problems.isNotEmpty()) {
                 append("\n\n⚠️ Problemas\n")

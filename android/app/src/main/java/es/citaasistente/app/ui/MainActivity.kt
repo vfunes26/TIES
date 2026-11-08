@@ -201,10 +201,11 @@ class MainActivity : AppCompatActivity() {
         val master = es.citaasistente.app.data.Session.isMaster(this)
 
         v<TextView>("tvSession").text =
-            "Sesión: ${es.citaasistente.app.data.Session.label(this)}" +
+            "Versión ${es.citaasistente.app.BuildConfig.VERSION_NAME} · Sesión: ${es.citaasistente.app.data.Session.label(this)}" +
                 if (master) "" else "\nLa configuración la gestiona el master."
         v<MaterialButton>("btnChangePass").setOnClickListener { AccountUi.changePassword(this) }
         v<MaterialButton>("btnLogout").setOnClickListener { AccountUi.logout(this) }
+        v<MaterialButton>("btnBattery").setOnClickListener { AccountUi.batteryOptimization(this) }
 
         if (master) return
 

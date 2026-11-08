@@ -28,6 +28,7 @@ data class Request(
     val reference: String = "",     // código/justificante si se pudo extraer
     val failReason: String = "",
     val history: List<HistoryItem> = emptyList(),
+    val sourceChat: String = "",    // chat de Telegram del cliente que envió la solicitud (vacío = la creó el master o la app)
     val archivedAt: Long = 0L,      // 0 = solicitud activa; >0 = en el historial desde esa fecha (se borra a los 30 días)
 ) {
     /** Solicitudes del mismo grupo comparten disponibilidad: si no hay citas para una, no las hay para las demás. */
@@ -40,6 +41,7 @@ data class Request(
         .put("status", status.name).put("attempts", attempts).put("updatedAt", updatedAt)
         .put("slot", slot).put("result", result).put("reference", reference).put("failReason", failReason)
         .put("archivedAt", archivedAt)
+        .put("sourceChat", sourceChat)
         .put("history", JSONArray().also { arr ->
             history.forEach { arr.put(JSONObject().put("t", it.t).put("k", it.kind).put("m", it.text)) }
         })
@@ -57,6 +59,7 @@ data class Request(
                 slot = o.optString("slot"), result = o.optString("result"),
                 reference = o.optString("reference"), failReason = o.optString("failReason"),
                 archivedAt = o.optLong("archivedAt"),
+                sourceChat = o.optString("sourceChat"),
                 history = (0 until (h?.length() ?: 0)).map {
                     val x = h!!.getJSONObject(it)
                     HistoryItem(x.optLong("t"), x.optString("k"), x.optString("m"))

@@ -148,6 +148,7 @@ object AccountUi {
                                 button.isEnabled = true
                                 when (r.verdict) {
                                     GoogleAuth.Verdict.OK -> {
+                                        es.citaasistente.app.net.AccessGuard.reportNewAccess(activity, newEmail, newKey)
                                         ap.save(newEmail, newKey, System.currentTimeMillis())
                                         toast(activity, "Acceso actualizado.")
                                         dialog.dismiss()
@@ -165,6 +166,25 @@ object AccountUi {
         }
 
         dialog.show()
+    }
+
+    /** Pide a Android que la app no sea limitada por el ahorro de batería (para que los avisos y comprobaciones corran a tiempo). */
+    fun batteryOptimization(activity: AppCompatActivity) {
+        val pm = activity.getSystemService(android.os.PowerManager::class.java)
+
+        if (pm != null && pm.isIgnoringBatteryOptimizations(activity.packageName)) {
+            toast(activity, "La app ya está excluida del ahorro de batería ✔")
+            return
+        }
+
+        try {
+            activity.startActivity(
+                Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                    .setData(android.net.Uri.parse("package:${activity.packageName}"))
+            )
+        } catch (e: Exception) {
+            activity.startActivity(Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+        }
     }
 
     private fun toast(activity: AppCompatActivity, msg: String) =

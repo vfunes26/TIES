@@ -45,6 +45,7 @@ object BackupManager {
         app = ctx.applicationContext
         Store.changeListener = { schedule(); ActivityReport.onChange(ctx) }
         ActivityReport.attach(ctx)
+        CrashReporter.install(ctx)
     }
 
     private fun schedule() {

@@ -93,12 +93,14 @@ object ProxySession {
 
             if (!r.ok) {
                 notes.add("${p.label()}: ${r.detail}")
+                ProxyHealth.onFail(store, p, r.detail)
                 continue
             }
 
             // Se prefiere un proxy con IP de España; si el país no se pudo saber, se acepta.
             if (r.isSpain || r.country.isBlank()) {
                 store.proxyCursor = ProxyRules.nextCursor(all, p)
+                ProxyHealth.onOk(store, p)
                 return Outcome(p, r, "")
             }
 

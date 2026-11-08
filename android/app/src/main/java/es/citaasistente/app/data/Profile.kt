@@ -37,7 +37,8 @@ data class Profile(
     fun step2Problems(catalog: Catalog): List<String> {
         val out = ArrayList<String>()
         val prov = catalog.province(provinceCode)
-        if (prov == null) out.add("Elige una provincia.")
+        if (provinceCode.isBlank()) { if (AnyProvince.provincesWith(catalog, procedureId).isEmpty()) out.add("Elige un trámite válido.") }
+        else if (prov == null) out.add("Elige una provincia.")
         else if (prov.procedure(procedureId) == null) out.add("Elige un trámite de ${prov.name}.")
         if (!Pattern.matches("^\\d{4}-\\d{2}-\\d{2}$", minDate)) out.add("Indica la fecha mínima aceptable de la cita.")
         return out

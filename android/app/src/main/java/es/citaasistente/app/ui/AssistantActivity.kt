@@ -255,7 +255,7 @@ class AssistantActivity : AppCompatActivity() {
     private fun start(req: Request) {
         val p = req.profile
         val problems = p.problems(catalog, nats)
-        val prov = catalog.province(p.provinceCode)
+        val prov = catalog.province(p.provinceCode.ifBlank { es.citaasistente.app.data.AnyProvince.pick(catalog, p.procedureId, req.attempts) })
         val proc = prov?.procedure(p.procedureId)
         if (problems.isNotEmpty() || prov == null || proc == null) {
             val failed = store.updateRequest(req.id) { it.copy(status = Status.FALLIDA, failReason = problems.firstOrNull() ?: "Datos incompletos") }
@@ -366,6 +366,7 @@ class AssistantActivity : AppCompatActivity() {
         cancelLoadWatchdog()
         web.stopLoading()
         proxyTried.add(px.id)
+        es.citaasistente.app.net.ProxyHealth.onFail(store, px, reason)
         store.updateProxy(px.id) {
             it.copy(status = 2, detail = reason.take(120), testedAt = System.currentTimeMillis())
         }
@@ -567,6 +568,11 @@ class AssistantActivity : AppCompatActivity() {
                 val u = store.updateRequest(id) { it.copy(status = Status.CON_CITA, result = detail, reference = ref) }
                 Reporter.log(this, u, "confirmada", "CITA CONFIRMADA${if (ref.isNotBlank()) " · $ref" else ""}${if (!u?.slot.isNullOrBlank()) " · ${u?.slot}" else ""}")
                 Reporter.notify(this, Ev.CON_CITA, u, detail.take(500))
+                if (u != null) {
+                    // Captura de la confirmación: se envía al master y, si la mandó un cliente, también a su chat.
+                    val shot = es.citaasistente.app.net.ScreenShot.capture(web, java.io.File(cacheDir, "shots"), "cita-${u.id.take(8)}")
+                    es.citaasistente.app.net.ClientNotify.photo(this, u, shot)
+                }
                 humanNeeded("¡Cita confirmada!", "${r.displayName()} · ${u?.slot.orEmpty()}")
                 outcome(5000)
             }
@@ -614,6 +620,7 @@ class AssistantActivity : AppCompatActivity() {
             else -> { // unknown, error...
                 val u = store.updateRequest(id) { it.copy(status = Status.ESPERANDO_HUMANO) }
                 Reporter.log(this, u, "humano", "Necesita ayuda: $detail")
+                es.citaasistente.app.net.Diagnostics.unknownPage(this, r, step, status, detail, web.url)
                 humanNeeded("Necesito tu ayuda: ${stepName(step)}", detail, urgent = false)
                 armHumanDeadline()
             }

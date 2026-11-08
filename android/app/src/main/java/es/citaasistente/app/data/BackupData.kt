@@ -43,6 +43,7 @@ object BackupData {
             .put("ledger", ledger)
             .put("settings", store.settings.toJson())
             .put("proxies", prox)
+            .put("clients", try { JSONArray(store.clientsRaw()) } catch (e: Exception) { JSONArray() })
     }
 
     fun wrap(body: JSONObject, now: Long): JSONObject =
@@ -123,6 +124,8 @@ object BackupData {
 
         val proxies = readProxies(json)
         if (proxies.isNotEmpty()) store.saveProxies(proxies)
+
+        json.optJSONArray("clients")?.let { if (it.length() > 0) store.setClientsRaw(it.toString()) }
 
         return summary
     }

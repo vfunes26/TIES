@@ -1,4 +1,3 @@
-
 name: Compilar APK (Android)
 
 on:
@@ -56,27 +55,21 @@ jobs:
         working-directory: android
         run: gradle --no-daemon testDebugUnitTest
 
-      - name: Compilar APK Debug
-        working-directory: android
-        run: |
-          gradle --no-daemon assembleDebug \
-            -PversionCode="$VERSION_CODE" \
-            -PversionName="0.1.$VERSION_CODE"
-
-      - name: Verificar firma para publicación
-        if: startsWith(github.ref, 'refs/tags/v')
+      # Solo se genera el APK firmado (release). Ya no se genera el APK de depuración.
+      - name: Verificar firma
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           if [ -z "$KEYSTORE_BASE64" ] || \
              [ -z "$KEYSTORE_PASSWORD" ] || \
              [ -z "$KEY_ALIAS" ] || \
              [ -z "$KEY_PASSWORD" ]; then
-            echo "ERROR: Faltan secretos de firma para publicar una versión."
+            echo "ERROR: Faltan los secretos de firma (KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)."
             exit 1
           fi
 
       - name: Compilar APK Release firmado
-        if: github.event_name != 'pull_request' && env.KEYSTORE_BASE64 != '' && env.KEYSTORE_PASSWORD != '' && env.KEY_ALIAS != '' && env.KEY_PASSWORD != ''
+        if: github.event_name != 'pull_request'
         working-directory: android
         shell: bash
         run: |
@@ -87,15 +80,24 @@ jobs:
             -PversionCode="$VERSION_CODE" \
             -PversionName="0.1.$VERSION_CODE"
 
+      - name: Nombrar el APK con la versión
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/TIES-APK-v0.1.${VERSION_CODE}.apk"
+          ls -l dist
+
       - name: Guardar APK como artefacto
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: TIES-APK-v0.1.${{ github.run_number }}
-          path: android/app/build/outputs/apk/**/*.apk
+          path: dist/TIES-APK-v0.1.${{ github.run_number }}.apk
           if-no-files-found: error
 
       - name: Publicar versión en GitHub Releases
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/app-release.apk
+          files: dist/TIES-APK-v0.1.${{ github.run_number }}.apk

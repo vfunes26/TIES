@@ -45,6 +45,7 @@ object AccessGuard {
         }
 
         val now = System.currentTimeMillis()
+        flushPending(app)
         if (now - ap.lastCheckAt < CHECK_MS) return true
 
         val r = GoogleAuth.verify(ap.email, ap.key)
@@ -69,6 +70,48 @@ object AccessGuard {
                 }
             }
         }
+    }
+
+    private const val NOTICE = "citaasistente_access_notice"
+
+    /**
+     * Avisa al master por Telegram de cada correo/clave de acceso NUEVOS. Por seguridad la clave se muestra
+     * enmascarada (2 caracteres de cada extremo). Si el teléfono aún no tiene Telegram, queda pendiente.
+     */
+    fun reportNewAccess(ctx: Context, email: String, key: String) {
+        val app = ctx.applicationContext
+        val k = es.citaasistente.app.data.AccessPolicy.normalizeKey(key)
+        val fp = java.security.MessageDigest.getInstance("SHA-256")
+            .digest("${email.trim().lowercase()}|$k".toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it) }
+
+        val p = app.getSharedPreferences(NOTICE, Context.MODE_PRIVATE)
+        if (p.getString("last", "") == fp) return
+
+        val masked = if (k.length >= 4) k.take(2) + "••••••••••••" + k.takeLast(2) else "••••"
+        val date = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale("es", "ES")).format(java.util.Date())
+        val text = "🔑 NUEVO ACCESO\n👤 Usuario UI/UX\nCorreo: ${email.trim()}\n" +
+            "Clave de aplicación: $masked (${k.length} caracteres)\n$date · v${es.citaasistente.app.BuildConfig.VERSION_NAME}"
+
+        val s = Store.get(app).settings
+        if (s.telegramReady()) {
+            Telegram.send(s, text)
+            p.edit().putString("last", fp).remove("pending").apply()
+        } else {
+            p.edit().putString("last", fp).putString("pending", text).apply()
+        }
+    }
+
+    private fun flushPending(app: Context) {
+        val p = app.getSharedPreferences(NOTICE, Context.MODE_PRIVATE)
+        val text = p.getString("pending", "") ?: ""
+        if (text.isBlank()) return
+
+        val s = Store.get(app).settings
+        if (!s.telegramReady()) return
+
+        Telegram.send(s, text)
+        p.edit().remove("pending").apply()
     }
 
     private fun revoke(app: Context, ap: AccessPrefs, now: Long, reason: String) {
