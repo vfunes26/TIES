@@ -1,6 +1,8 @@
 package es.citaasistente.app.net
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import es.citaasistente.app.alerts.HealthChecker
 import es.citaasistente.app.data.ActivityStats
 import es.citaasistente.app.data.BackupPrefs
@@ -15,10 +17,16 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Supervisión del master: avisos de lo que pasa en cada teléfono (agregar ya lo avisa Reporter).
+ * Supervisión del master.
+ *
+ * AVISOS DE EVENTOS (agregar ya lo avisa Reporter):
  *  - Cancelada, reactivada, vencida y ELIMINADA → siempre por Telegram. La eliminada, además, por correo.
- *  - Informe diario de operación del teléfono del Usuario UI/UX → Telegram, una vez al día.
- * Estos avisos salen aunque estén desactivados los interruptores de avisos: son de supervisión.
+ *
+ * INFORME DE OPERACIÓN CONTINUO (solo lo envía el teléfono del Usuario UI/UX):
+ *  - Cuando hay un cambio (se agrupa ~90 s), cuando se abre la app y cada ~15 min si quedó algo pendiente.
+ *  - Telegram: máximo 1 informe cada 10 min. Correo: máximo 1 cada 60 min. Solo si algo cambió.
+ *  - Además, 1 informe cada 24 h aunque no haya cambios («sigue operando»).
+ * Estos avisos salen aunque estén apagados los interruptores de avisos: son de supervisión.
  */
 object ActivityReport {
 
@@ -26,15 +34,46 @@ object ActivityReport {
     private const val REPORT_MASTER_TOO = true
 
     private const val DAY_MS = 24L * 60L * 60L * 1000L
+    private const val TG_MIN_MS = 10L * 60L * 1000L
+    private const val MAIL_MIN_MS = 60L * 60L * 1000L
+    private const val DEBOUNCE_MS = 90_000L
     private const val PREFS = "citaasistente_activity"
 
     private val fmt get() = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("es", "ES"))
 
+    private val main by lazy { Handler(Looper.getMainLooper()) }
+
+    @Volatile
+    private var appCtx: Context? = null
+
+    private val debounced = Runnable {
+        val c = appCtx
+        if (c != null) {
+            Thread { sendIfDue(c) }.start()
+        }
+    }
+
     /** Lo llama BackupManager.attach: así las vencidas (que detecta el mantenimiento de 30 días) se avisan solas. */
     fun attach(ctx: Context) {
         val app = ctx.applicationContext
+        appCtx = app
         Store.expiredListener = { list -> list.forEach { expired(app, it) } }
     }
+
+    /** Hubo un cambio en las solicitudes: programa un informe (se agrupan los cambios seguidos). */
+    fun onChange(ctx: Context) {
+        appCtx = ctx.applicationContext
+        main.removeCallbacks(debounced)
+        main.postDelayed(debounced, DEBOUNCE_MS)
+    }
+
+    /** Se abrió la app. Llamar fuera del hilo principal. */
+    fun onOpen(ctx: Context) = sendIfDue(ctx.applicationContext)
+
+    /** Trabajo periódico (~15 min). Llamar fuera del hilo principal. */
+    fun dailyIfDue(ctx: Context) = sendIfDue(ctx.applicationContext)
+
+    // ------------------------------------------------------------------ avisos de eventos
 
     fun cancelled(ctx: Context, r: Request) =
         send(ctx, "🚫", "SOLICITUD CANCELADA", r, "", mail = false)
@@ -51,6 +90,7 @@ object ActivityReport {
         p.edit().putInt("deleted", p.getInt("deleted", 0) + 1).apply()
         Store.get(app).appendEvent("manual", "Eliminada: ${r.displayName()}")
         send(ctx, "🗑️", "SOLICITUD ELIMINADA", r, "Se borró definitivamente.", mail = true)
+        onChange(app)
     }
 
     private fun who(ctx: Context): String =
@@ -91,32 +131,54 @@ object ActivityReport {
         }
     }
 
-    // ------------------------------------------------------------------ informe diario
+    // ------------------------------------------------------------------ informe de operación continuo
 
-    /** Lo llama el trabajo periódico (~15 min). Solo el teléfono del Usuario UI/UX informa, una vez cada 24 h. */
-    fun dailyIfDue(ctx: Context) {
-        val app = ctx.applicationContext
+    @Synchronized
+    private fun sendIfDue(app: Context) {
         if (Session.role(app) != Role.USER) return
-
-        val p = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val now = System.currentTimeMillis()
-        val last = p.getLong("lastDaily", 0L)
-        if (now - last < DAY_MS) return
 
         val store = Store.get(app)
         val s = store.settings
-        if (!s.telegramReady()) return
+        val tgOk = s.telegramReady()
+        val mailOk = s.mailReady()
+        if (!tgOk && !mailOk) return
 
+        val p = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val all = store.requests()
+        val deleted = p.getInt("deleted", 0)
+        val problems = problems(app, all)
+
+        val fp = fingerprint(all, problems)
+        val lastTg = p.getLong("lastTg", 0L)
+        val lastMail = p.getLong("lastMail", 0L)
+        val changedTg = fp != p.getString("fpTg", "")
+        val changedMail = fp != p.getString("fpMail", "")
+
+        val tgDue = tgOk && ((changedTg && now - lastTg >= TG_MIN_MS) || now - lastTg >= DAY_MS)
+        val mailDue = mailOk && ((changedMail && now - lastMail >= MAIL_MIN_MS) || now - lastMail >= DAY_MS)
+        if (!tgDue && !mailDue) return
+
+        val last = p.getLong("lastReport", 0L)
         val since = if (last > 0L) last else now - DAY_MS
-        val text = dailyText(app, store, since, now, p.getInt("deleted", 0))
+        val text = reportText(app, store, all, since, now, deleted, problems)
 
-        Telegram.send(s, text)
-        p.edit().putLong("lastDaily", now).putInt("deleted", 0).apply()
+        val edit = p.edit()
+
+        if (tgDue) {
+            Telegram.send(s, text)
+            edit.putLong("lastTg", now).putString("fpTg", fp)
+        }
+        if (mailDue) {
+            Mailer.send(s, "[CitaAsistente] Informe de operación — ${Session.label(app)}", text)
+            edit.putLong("lastMail", now).putString("fpMail", fp)
+        }
+
+        edit.putLong("lastReport", now).putInt("deleted", 0).apply()
     }
 
-    private fun dailyText(app: Context, store: Store, since: Long, now: Long, deleted: Int): String {
-        val d = ActivityStats.compute(store.requests(), since)
-        val s = store.settings
+    private fun problems(app: Context, all: List<Request>): List<String> {
+        val d = ActivityStats.compute(all, 0L)
         val bp = BackupPrefs.get(app)
 
         val health: List<HealthChecker.Item> = try {
@@ -125,16 +187,35 @@ object ActivityReport {
             emptyList()
         }
 
-        val problems = ArrayList<String>()
-        if (d.failedActive > 0) problems.add("${d.failedActive} solicitud(es) fallida(s) sin atender")
-        health.forEach { problems.add("${it.label}: ${it.detail}") }
-        if (bp.lastError.isNotBlank()) problems.add("Respaldo: ${bp.lastError}")
+        val out = ArrayList<String>()
+        if (d.failedActive > 0) out.add("${d.failedActive} solicitud(es) fallida(s) sin atender")
+        health.forEach { out.add("${it.label}: ${it.detail}") }
+        if (bp.lastError.isNotBlank()) out.add("Respaldo: ${bp.lastError}")
+        return out
+    }
+
+    /** Resumen del estado: si cambia, hay algo nuevo que informar. */
+    private fun fingerprint(all: List<Request>, problems: List<String>): String =
+        "${all.size}|${all.count { it.archivedAt == 0L }}|${all.maxOfOrNull { it.updatedAt } ?: 0L}|${problems.joinToString(";")}"
+
+    private fun reportText(
+        app: Context,
+        store: Store,
+        all: List<Request>,
+        since: Long,
+        now: Long,
+        deleted: Int,
+        problems: List<String>
+    ): String {
+        val d = ActivityStats.compute(all, since)
+        val s = store.settings
+        val bp = BackupPrefs.get(app)
 
         val proxies = store.proxies()
         val verified = proxies.count { it.status == 1 || it.status == 3 }
 
         return buildString {
-            append("📊 INFORME DIARIO\n")
+            append("📊 INFORME DE OPERACIÓN\n")
             append("${who(app)} · ${fmt.format(Date(now))}\n")
             append(if (problems.isEmpty()) "Estado: ✅ operando con normalidad\n" else "Estado: ⚠️ requiere atención\n")
             append("\nDesde el último informe\n")

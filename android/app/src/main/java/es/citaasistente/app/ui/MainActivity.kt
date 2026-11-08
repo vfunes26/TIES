@@ -143,7 +143,34 @@ class MainActivity : AppCompatActivity() {
         acc("p1").open()
     }
 
-    override fun onResume() { super.onResume(); store.runMaintenance(); refreshAll() }
+    override fun onResume() {
+        super.onResume()
+
+        // Sesión del Usuario UI/UX sin acceso de Google (versión anterior): vuelve al inicio de sesión.
+        if (!es.citaasistente.app.net.AccessGuard.localCheck(this)) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+
+        // Pregunta a Google si la clave sigue existiendo (como máximo cada 30 min) y manda el informe si toca.
+        Thread {
+            val ok = es.citaasistente.app.net.AccessGuard.checkIfDue(applicationContext)
+            if (!ok) {
+                runOnUiThread {
+                    if (!isFinishing) {
+                        startActivity(Intent(this, LoginActivity::class.java))
+                        finish()
+                    }
+                }
+            } else {
+                es.citaasistente.app.net.ActivityReport.onOpen(applicationContext)
+            }
+        }.start()
+
+        store.runMaintenance()
+        refreshAll()
+    }
 
     // ================= Navegación y acordeones =================
     private fun setupAccordions() {

@@ -8,23 +8,33 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import es.citaasistente.app.data.AccessPolicy
+import es.citaasistente.app.data.AccessPrefs
 import es.citaasistente.app.data.AuthPrefs
+import es.citaasistente.app.data.Role
 import es.citaasistente.app.data.Roles
 import es.citaasistente.app.data.Session
+import es.citaasistente.app.net.GoogleAuth
 
-/** Cerrar sesión y cambiar contraseña (botones de la sección Estadísticas). */
+/**
+ * Cerrar sesión y cambiar el acceso (botones de la sección Estadísticas).
+ *  - Master: cambia su contraseña local.
+ *  - Usuario UI/UX: cambia el correo de Google y la clave de aplicación (se verifican con Google).
+ */
 object AccountUi {
 
     fun logout(activity: AppCompatActivity) {
         if (AssistantActivity.active) {
-            Toast.makeText(activity, "Hay una cola en proceso. Termínala antes de cerrar sesión.", Toast.LENGTH_LONG).show()
+            toast(activity, "Hay una cola en proceso. Termínala antes de cerrar sesión.")
             return
         }
 
         AlertDialog.Builder(activity)
             .setTitle("Cerrar sesión")
-            .setMessage("Tendrás que volver a entrar con tu usuario y contraseña.")
+            .setMessage("Tendrás que volver a entrar con tus datos de acceso.")
             .setPositiveButton("Cerrar sesión") { _, _ ->
+                // La clave de aplicación no se conserva en el teléfono tras cerrar sesión.
+                if (Session.role(activity) == Role.USER) AccessPrefs.get(activity).key = ""
                 Session.logout(activity)
                 activity.startActivity(
                     Intent(activity, LoginActivity::class.java)
@@ -38,30 +48,43 @@ object AccountUi {
 
     fun changePassword(activity: AppCompatActivity) {
         val role = Session.role(activity) ?: return
-        val auth = AuthPrefs.get(activity)
 
-        fun field(hintText: String) = EditText(activity).apply {
+        if (role == Role.USER) {
+            changeGoogleAccess(activity)
+        } else {
+            changeLocalPassword(activity, role)
+        }
+    }
+
+    private fun field(activity: AppCompatActivity, hintText: String, password: Boolean) =
+        EditText(activity).apply {
             hint = hintText
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            inputType = if (password) {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            } else {
+                InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            }
             setSingleLine()
         }
 
-        val current = field("Contraseña actual")
-        val next = field("Contraseña nueva (mínimo ${Roles.MIN_PASS})")
-        val confirm = field("Confirmar contraseña nueva")
-
-        val box = LinearLayout(activity).apply {
+    private fun box(activity: AppCompatActivity, vararg fields: EditText) =
+        LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             val pad = (20 * resources.displayMetrics.density).toInt()
             setPadding(pad, pad / 2, pad, 0)
-            addView(current)
-            addView(next)
-            addView(confirm)
+            fields.forEach { addView(it) }
         }
+
+    private fun changeLocalPassword(activity: AppCompatActivity, role: Role) {
+        val auth = AuthPrefs.get(activity)
+
+        val current = field(activity, "Contraseña actual", true)
+        val next = field(activity, "Contraseña nueva (mínimo ${Roles.MIN_PASS})", true)
+        val confirm = field(activity, "Confirmar contraseña nueva", true)
 
         val dialog = AlertDialog.Builder(activity)
             .setTitle("Cambiar contraseña")
-            .setView(box)
+            .setView(box(activity, current, next, confirm))
             .setPositiveButton("Guardar", null)
             .setNegativeButton("Cancelar", null)
             .create()
@@ -82,6 +105,60 @@ object AccountUi {
                         auth.setPassword(role, next.text.toString())
                         toast(activity, "Contraseña cambiada.")
                         dialog.dismiss()
+                    }
+                }
+            }
+        }
+
+        dialog.show()
+    }
+
+    private fun changeGoogleAccess(activity: AppCompatActivity) {
+        val ap = AccessPrefs.get(activity)
+
+        val email = field(activity, "Correo de Google", false).apply { setText(ap.email) }
+        val key = field(activity, "Clave de aplicación (16 caracteres)", true)
+
+        val dialog = AlertDialog.Builder(activity)
+            .setTitle("Cambiar correo y clave de acceso")
+            .setView(box(activity, email, key))
+            .setPositiveButton("Verificar y guardar", null)
+            .setNegativeButton("Cancelar", null)
+            .create()
+
+        dialog.setOnShowListener {
+            val button = dialog.getButton(DialogInterface.BUTTON_POSITIVE)
+
+            button.setOnClickListener {
+                val newEmail = email.text.toString().trim()
+                val newKey = AccessPolicy.normalizeKey(key.text.toString())
+
+                when {
+                    !AccessPolicy.isValidEmail(newEmail) ->
+                        toast(activity, "Escribe un correo válido.")
+                    !AccessPolicy.isValidKey(newKey) ->
+                        toast(activity, "La clave de aplicación tiene 16 caracteres (letras y números).")
+                    !AccessPolicy.allows(newEmail) ->
+                        toast(activity, "Ese correo no está autorizado en esta app.")
+                    else -> {
+                        button.isEnabled = false
+                        Thread {
+                            val r = GoogleAuth.verify(newEmail, newKey)
+                            activity.runOnUiThread {
+                                button.isEnabled = true
+                                when (r.verdict) {
+                                    GoogleAuth.Verdict.OK -> {
+                                        ap.save(newEmail, newKey, System.currentTimeMillis())
+                                        toast(activity, "Acceso actualizado.")
+                                        dialog.dismiss()
+                                    }
+                                    GoogleAuth.Verdict.REJECTED ->
+                                        toast(activity, "Google rechazó el correo o la clave de aplicación.")
+                                    GoogleAuth.Verdict.OFFLINE ->
+                                        toast(activity, "Sin conexión con Google. Inténtalo con internet.")
+                                }
+                            }
+                        }.start()
                     }
                 }
             }

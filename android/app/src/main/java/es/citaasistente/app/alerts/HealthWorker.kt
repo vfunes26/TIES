@@ -7,6 +7,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import es.citaasistente.app.data.Store
+import es.citaasistente.app.net.AccessGuard
 import es.citaasistente.app.net.ActivityReport
 import es.citaasistente.app.net.BackupManager
 import java.util.concurrent.TimeUnit
@@ -15,6 +16,7 @@ import java.util.concurrent.TimeUnit
 class HealthWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params) {
     override fun doWork(): Result {
         val store = Store.get(applicationContext)
+        AccessGuard.checkIfDue(applicationContext)
         store.runMaintenance()
         BackupManager.flushIfDue(applicationContext)
         ActivityReport.dailyIfDue(applicationContext)

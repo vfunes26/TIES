@@ -47,7 +47,7 @@ import es.citaasistente.app.net.ProxySession
  * deja su historial (qué se hizo y cuándo) y avisa por Telegram/correo según tus ajustes.
  *
  * Respeta a la sede: una sola sesión a la vez, separación mínima entre solicitudes, pausas entre
- * lotes y esperas crecientes si la sede limita o rechaza peticiones. Si activas proxies, usa uno solo (HTTP/HTTPS con usuario y contraseña) durante toda la cola.
+ * lotes y esperas crecientes si la sede limita o rechaza peticiones. Si activas proxies, usa un proxy por lote: al completar cada lote (Ajustes → Procesamiento → solicitudes por lote) cambia al siguiente proxy de la lista.
  */
 class AssistantActivity : AppCompatActivity() {
 
@@ -200,6 +200,11 @@ class AssistantActivity : AppCompatActivity() {
 
     // ---------- Selección de la siguiente solicitud ----------
     private fun nextRequest() {
+        // Si el acceso se revocó o se cerró la sesión, la cola se detiene aquí (entre una solicitud y la siguiente).
+        if (!finished && !es.citaasistente.app.data.Session.isLoggedIn(this)) {
+            finishRun("Sesión cerrada", "El acceso fue revocado o cerrado. Inicia sesión de nuevo para continuar.")
+            return
+        }
         cancelTimer()
         if (finished || paused) return
         val settings = store.settings
@@ -230,6 +235,8 @@ class AssistantActivity : AppCompatActivity() {
         }
         if (limit > 0 && attemptsInRun >= limit) { finishRun("Lote completado", "Se procesaron $attemptsInRun solicitud(es)."); return }
         if (mode == MODE_QUEUE && alertIds.isEmpty() && batchCount >= settings.batchSize) {
+            // Lote completo: se libera el proxy. El siguiente lote arranca con el proxy siguiente de la lista.
+            endProxySession()
             batchCount = 0
             if (settings.batchPauseMinutes > 0) {
                 countdown("Lote de ${settings.batchSize} completado", settings.batchPauseMinutes * 60_000L) { nextRequest() }

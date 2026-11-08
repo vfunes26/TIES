@@ -43,7 +43,7 @@ object BackupManager {
     /** Lo llama Store al crearse: así cualquier cambio en las solicitudes programa un respaldo. */
     fun attach(ctx: Context) {
         app = ctx.applicationContext
-        Store.changeListener = { schedule() }
+        Store.changeListener = { schedule(); ActivityReport.onChange(ctx) }
         ActivityReport.attach(ctx)
     }
 
