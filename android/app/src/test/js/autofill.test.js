@@ -51,6 +51,12 @@ async function run(elements, cfg, bodyText='') {
   assert.ok(r[0].detail.includes('17/02/2026'));
   els = []; r = await run(els, {offices:[]}, 'En este momento no hay citas disponibles.'); assert.strictEqual(r[0].status, 'no_slots');
   els = []; r = await run(els, {offices:[]}, 'The requested URL was rejected. Please consult with your administrator.'); assert.strictEqual(r[0].status, 'blocked');
-  console.log('autofill.js: 8 comprobaciones OK');
+  els = []; r = await run(els, {offices:[]}, 'Información En este momento no hay citas disponibles. En breve, la Oficina pondrá a su disposición nuevas citas. Cod. Oper.: 3967F050C6C042E5D10E09DC681B03E5mol3 27/10/2026 11:25:27');
+  assert.strictEqual(r[0].status, 'nie_blocked'); assert.ok(r[0].detail.includes('3967F050'));                                  // Fig. 4: NIE bloqueado
+  els = []; r = await run(els, {offices:[]}, 'Información En este momento no hay citas disponibles para la reserva sin cl@ve. SÍ TIENEN A SU DISPOSICIÓN MEDIANTE EL USO DE CL@VE, CITAS DISPONIBLES PARA SU RESERVA.');
+  assert.strictEqual(r[0].status, 'no_slots'); assert.ok(r[0].detail.toLowerCase().includes('cl@ve'));                         // Fig. 1
+  els = []; r = await run(els, {offices:[]}, 'Tu cita ha sido confirmada. Deberás aportar este justificante el día de la cita.');
+  assert.strictEqual(r[0].status, 'confirmed');                                                                              // confirmación final
+  console.log('autofill.js: 11 comprobaciones OK');
   process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

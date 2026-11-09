@@ -230,6 +230,10 @@ class TelegramIntakeService : Service() {
                     reply(block(text.substringAfter(' ', "").trim(), store))
                 }
 
+                isMaster && normalized.startsWith("/intentos") -> {
+                    reply(es.citaasistente.app.data.AttemptStore.command(this, text.substringAfter(' ', "").trim()))
+                }
+
                 IntakeParser.looksLikeRequest(text) -> {
                     val sender = if (isMaster) "" else chat
                     val who = if (isMaster) "" else clientName(store, chat, update.from)

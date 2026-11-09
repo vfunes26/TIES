@@ -44,6 +44,7 @@ Obligatorios: NIE (o DOCUMENTO), NOMBRE, NACIONALIDAD, TELEFONO y CORREO.
 • FECHA_MINIMA vacía: se toma la primera cita disponible desde hoy (hora de España).
 • Mayúsculas o minúsculas, da igual.
 • Varias solicitudes: separa con una línea --- (o empieza cada una con /NUEVA).
+• Administrador: /intentos muestra los intentos usados hoy por NIE (el portal permite 5); /intentos NIE N corrige el contador.
 
 Comandos: /ayuda /estado /cola /cancelar ID
     """.trimIndent()

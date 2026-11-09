@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
                 if (master) "" else "\nLa configuración la gestiona el master."
         v<MaterialButton>("btnChangePass").setOnClickListener { AccountUi.changePassword(this) }
         v<MaterialButton>("btnLogout").setOnClickListener { AccountUi.logout(this) }
-        v<MaterialButton>("btnBattery").setOnClickListener { AccountUi.batteryOptimization(this) }
+        v<MaterialButton>("btnBatteryAjustes").setOnClickListener { AccountUi.batteryOptimization(this) }
 
         if (master) return
 

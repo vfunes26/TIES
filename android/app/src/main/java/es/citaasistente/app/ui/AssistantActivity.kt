@@ -208,7 +208,12 @@ class AssistantActivity : AppCompatActivity() {
         cancelTimer()
         if (finished || paused) return
         val settings = store.settings
-        val pending = store.requests().filter { it.status == Status.PENDIENTE }
+        val allPending = store.requests().filter { it.status == Status.PENDIENTE }
+        // Límites del portal: se salta a quien ya gastó sus intentos de hoy o está en espera de seguridad.
+        val pending = allPending.filter {
+            es.citaasistente.app.data.AttemptStore.allows(this, it.profile.docNumber, ignoreCooldown = mode == MODE_SINGLE)
+        }
+        val gated = allPending.size - pending.size
 
         var next: Request? = null
         if (mode == MODE_SINGLE) {
@@ -223,6 +228,7 @@ class AssistantActivity : AppCompatActivity() {
 
         if (next == null) {
             when {
+                gated > 0 && pending.isEmpty() -> waitForPortalLimits(allPending)
                 mode != MODE_QUEUE || pending.isEmpty() ->
                     finishRun(if (pending.isEmpty() && mode == MODE_QUEUE) "Cola vacía" else "Terminado",
                         if (pending.isEmpty()) "No quedan solicitudes pendientes." else "Fin del proceso.")
@@ -250,6 +256,20 @@ class AssistantActivity : AppCompatActivity() {
             return
         }
         start(next)
+    }
+
+    /** Todas las pendientes están limitadas por el portal: espera de seguridad corta, o fin hasta las 00:00. */
+    private fun waitForPortalLimits(blocked: List<Request>) {
+        val wait = es.citaasistente.app.data.AttemptStore.waitMillis(this, blocked.map { it.profile.docNumber })
+
+        if (mode == MODE_QUEUE && wait in 1L..(60L * 60_000L)) {
+            countdown("Espera de seguridad del portal", wait + 5_000L) { nextRequest() }
+        } else {
+            finishRun(
+                "Intentos del portal agotados",
+                "Se alcanzó el límite diario de intentos del portal. Se puede reanudar después de las 00:00 (hora de España)."
+            )
+        }
     }
 
     private fun start(req: Request) {
@@ -529,6 +549,7 @@ class AssistantActivity : AppCompatActivity() {
         lastKey = key
         val r = store.request(id) ?: return
         val group = r.groupKey()
+        es.citaasistente.app.net.PortalGuard.onReport(this, r, step, status, detail)
 
         if (status == "filled" && repeats >= 3) {
             fail(r, "Paso repetido en ${stepName(step)}: la sede devolvió la misma página (¿dato incorrecto?).")
@@ -575,6 +596,13 @@ class AssistantActivity : AppCompatActivity() {
                 }
                 humanNeeded("¡Cita confirmada!", "${r.displayName()} · ${u?.slot.orEmpty()}")
                 outcome(5000)
+            }
+            "nie_blocked" -> {
+                blocks = 0
+                val u = store.updateRequest(id) { it.copy(status = Status.PENDIENTE) }
+                Reporter.log(this, u, "bloqueo", "NIE bloqueado por el portal hasta las 00:00 (hora de España)")
+                passSkip.add(group)
+                outcome()
             }
             "no_slots" -> {
                 blocks = 0

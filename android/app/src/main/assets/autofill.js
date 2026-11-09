@@ -157,6 +157,13 @@
     report('slots', 'captcha_needed', 'Elegida: ' + res.chosen.text + '. Escribe el captcha y pulsa Siguiente.');
   }
 
+  /** Trozo de la página alrededor de un mensaje (para que la app lo interprete y te lo cuente). */
+  function snippet(text, re) {
+    const m = re.exec(text);
+    const i = m ? Math.max(0, m.index - 60) : 0;
+    return text.slice(i, i + 640).replace(/\s+/g, ' ').trim();
+  }
+
   async function dispatch(cfg) {
     const text = (document.body && document.body.innerText) || '';
     const t = norm(text);
@@ -175,7 +182,7 @@
     if (cookie && cookie.offsetParent !== null) { try { cookie.click(); } catch (e) { } }
 
     // ---- Estados finales / de espera humana ----
-    if (byId('justificanteFinal') || t.indexOf('cita confirmada') >= 0) {
+    if (byId('justificanteFinal') || t.indexOf('cita confirmada') >= 0 || t.indexOf('tu cita ha sido confirmada') >= 0) {
       report('confirmed', 'confirmed', text.replace(/\s+/g, ' ').trim().slice(0, 900));
       return;
     }
@@ -189,8 +196,13 @@
     if (document.querySelector('[id^="cita_"]') || document.getElementsByName('rdbCita').length || byId('captcha')) {
       await doSlots(cfg); return;
     }
+    if (/cod\.?\s*oper/.test(t) && t.indexOf('en este momento no hay citas disponibles') >= 0) {
+      // Fig. 4: el portal bloqueó el NIE (hasta las 00:00). No se sigue intentando.
+      report('blocked', 'nie_blocked', snippet(text, /en este momento no hay citas disponibles/i));
+      return;
+    }
     if (t.indexOf('en este momento no hay citas disponibles') >= 0 || /si\s+tienen\s+a\s+su\s+disposicion\s+mediante\s+el\s+uso\s+de\s+cl@ve/.test(t)) {
-      report('no_slots', 'no_slots', 'Sin citas por ahora.');
+      report('no_slots', 'no_slots', snippet(text, /en este momento no hay citas disponibles|mediante el uso de cl@ve/i));
       return;
     }
 
